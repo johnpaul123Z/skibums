@@ -35,7 +35,7 @@ export function WeatherWidget() {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6 }}
-      className="glass rounded-2xl p-4 backdrop-blur-xl w-64 shadow-xl"
+      className="glass rounded-2xl p-4 backdrop-blur-xl w-48 md:w-64 shadow-xl"
     >
       <div className="flex items-center justify-between mb-3">
         <div>

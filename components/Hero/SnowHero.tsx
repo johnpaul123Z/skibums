@@ -44,8 +44,8 @@ export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: S
       {/* Mountain Silhouette Overlay */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-slate-900/80 to-transparent pointer-events-none" />
 
-      {/* Weather Widget */}
-      <div className="absolute top-8 right-8 z-20">
+      {/* Weather Widget - Hidden on mobile for better UX */}
+      <div className="hidden md:block absolute top-8 right-8 z-20">
         <WeatherWidget />
       </div>
 

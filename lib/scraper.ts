@@ -124,57 +124,79 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
       difficulty = 3;
     }
 
-    // Improved salary logic based on job type and category
-    let salary = 'Competitive';
+    // Realistic salary estimates based on ski industry standards
+    let salary = 'DOE'; // Depends on Experience
     
-    // Management positions
-    if (difficulty === 3) {
-      salary = '$45,000 - $75,000/year';
+    // Management & Directors
+    if (difficulty === 3 || title.includes('director') || title.includes('manager')) {
+      salary = '$50,000 - $80,000/year';
     }
-    // Ski/Snowboard Instructors
-    else if (title.includes('instructor') || category.includes('ski') || category.includes('snowboard')) {
-      if (title.includes('certified') || difficulty === 2) {
-        salary = '$25 - $35/hour';
+    // Ski/Snowboard Instructors (most common role)
+    else if (title.includes('instructor') || category.includes('ski') || category.includes('snowboard school')) {
+      if (title.includes('certified') || title.includes('level 2') || title.includes('level 3')) {
+        salary = '$20 - $35/hour'; // Certified instructors earn more
+      } else if (title.includes('children') || title.includes('kids')) {
+        salary = '$18 - $25/hour'; // Children's instructors
       } else {
-        salary = '$18 - $28/hour';
+        salary = '$16 - $24/hour'; // Entry-level instructors
       }
+    }
+    // Ski Patrol (higher paying, requires certification)
+    else if (title.includes('patrol')) {
+      salary = '$18 - $28/hour';
     }
     // Lift Operations
-    else if (title.includes('lift') || title.includes('operator')) {
-      salary = '$16 - $22/hour';
+    else if (title.includes('lift') || title.includes('lift operator')) {
+      salary = '$15 - $19/hour'; // Entry-level mountain ops
     }
-    // Food & Beverage / Restaurant
-    else if (category.includes('restaurant') || category.includes('food') || category.includes('beverage') || 
-             title.includes('cook') || title.includes('chef') || title.includes('server') || title.includes('bartender')) {
-      if (title.includes('chef') || title.includes('manager')) {
-        salary = '$18 - $28/hour';
+    // Food Service & Restaurants
+    else if (category.includes('restaurant') || title.includes('cook') || title.includes('chef') || 
+             title.includes('server') || title.includes('bartender') || title.includes('food')) {
+      if (title.includes('chef') || title.includes('sous') || title.includes('executive')) {
+        salary = '$45,000 - $65,000/year';
+      } else if (title.includes('cook') || title.includes('line')) {
+        salary = '$16 - $22/hour';
+      } else if (title.includes('server') || title.includes('bartender')) {
+        salary = '$13 - $16/hour + tips';
       } else {
-        salary = '$15 - $20/hour + tips';
+        salary = '$15 - $19/hour';
       }
     }
-    // Retail
-    else if (category.includes('retail') || title.includes('retail')) {
-      salary = '$15 - $22/hour';
-    }
-    // Hotel/Hospitality
-    else if (category.includes('hotel') || category.includes('hospitality') || title.includes('front desk') || title.includes('housekeeping')) {
-      salary = '$16 - $24/hour';
-    }
-    // Transportation
-    else if (category.includes('transportation') || title.includes('driver') || title.includes('shuttle')) {
-      salary = '$18 - $25/hour';
-    }
-    // Mountain Operations (Grooming, Maintenance, Patrol)
-    else if (category.includes('mountain') || title.includes('groomer') || title.includes('patrol') || title.includes('maintenance')) {
-      if (title.includes('patrol')) {
-        salary = '$20 - $30/hour';
+    // Retail Operations
+    else if (category.includes('retail') || title.includes('retail') || title.includes('shop')) {
+      if (title.includes('manager') || title.includes('lead')) {
+        salary = '$18 - $25/hour';
       } else {
-        salary = '$18 - $28/hour';
+        salary = '$14 - $18/hour';
       }
     }
-    // Default for other positions
+    // Hotel & Hospitality
+    else if (category.includes('hotel') || title.includes('front desk') || title.includes('housekeeping') || 
+             title.includes('guest service') || title.includes('concierge')) {
+      if (title.includes('manager')) {
+        salary = '$45,000 - $60,000/year';
+      } else if (title.includes('front desk') || title.includes('concierge')) {
+        salary = '$16 - $22/hour';
+      } else {
+        salary = '$15 - $19/hour';
+      }
+    }
+    // Transportation (Bus drivers, shuttles)
+    else if (category.includes('transportation') || title.includes('driver') || title.includes('shuttle') || title.includes('bus')) {
+      salary = '$17 - $24/hour'; // CDL drivers earn more
+    }
+    // Mountain Operations (Grooming, snowmaking, maintenance)
+    else if (category.includes('mountain') || title.includes('groomer') || title.includes('snowmaking') || 
+             title.includes('maintenance') || title.includes('mechanic')) {
+      if (title.includes('mechanic') || title.includes('groomer')) {
+        salary = '$20 - $32/hour'; // Skilled positions
+      } else {
+        salary = '$16 - $24/hour';
+      }
+    }
+    // Default (misc positions)
     else {
-      salary = '$16 - $24/hour';
+      salary = '$15 - $22/hour';
     }
 
     // Get resort images

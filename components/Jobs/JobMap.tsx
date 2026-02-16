@@ -206,12 +206,12 @@ export function JobMap({ jobs }: JobMapProps) {
   }, [resortLocations]);
 
   return (
-    <div className="relative w-full h-[600px] rounded-2xl overflow-hidden">
+    <div className="relative w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden">
       {/* Map Container */}
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Legend */}
-      <div className="absolute top-4 left-4 glass-dark rounded-xl p-4 backdrop-blur-xl">
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 glass-dark rounded-xl p-2 md:p-4 backdrop-blur-xl text-xs md:text-base">
         <div className="flex items-center gap-2 mb-2">
           <MapPin className="w-5 h-5 text-cyan-400" />
           <span className="text-white font-bold">Resort Locations</span>
@@ -233,7 +233,7 @@ export function JobMap({ jobs }: JobMapProps) {
           initial={{ x: "100%" }}
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
-          className="absolute top-0 right-0 bottom-0 w-96 glass-dark backdrop-blur-xl overflow-y-auto"
+          className="absolute top-0 right-0 bottom-0 w-full md:w-96 glass-dark backdrop-blur-xl overflow-y-auto"
         >
           <div className="p-6">
             <div className="flex items-start justify-between mb-4">
