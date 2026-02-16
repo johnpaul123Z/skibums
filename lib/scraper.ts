@@ -348,7 +348,7 @@ export async function scrapeBoyneJobs(): Promise<ScrapedJob[]> {
     }).catch(() => console.log('Job selector not found, trying to extract anyway'));
 
     // Give Angular time to render
-    await page.waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Extract job data
     const jobs = await page.evaluate(() => {
