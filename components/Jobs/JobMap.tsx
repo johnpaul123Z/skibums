@@ -5,7 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Job } from "@/components/Jobs/JobCard3D";
 import { motion } from "framer-motion";
-import { X, MapPin, Briefcase, Map } from "lucide-react";
+import { X, MapPin, Briefcase, Map as MapIcon } from "lucide-react";
 
 // Mapbox token from environment variable
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -373,7 +373,7 @@ export function JobMap({ jobs }: JobMapProps) {
       {/* Legend */}
       <div className="absolute top-2 left-2 md:top-4 md:left-4 glass-dark rounded-xl p-2 md:p-4 backdrop-blur-xl text-xs md:text-base max-w-[200px]">
         <div className="flex items-center gap-2 mb-2">
-          <Map className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
+          <MapIcon className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
           <span className="text-white font-bold text-xs md:text-sm">Map Guide</span>
         </div>
         
@@ -416,7 +416,7 @@ export function JobMap({ jobs }: JobMapProps) {
             <div className="mb-4 pr-12">
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
-                  <Map className="w-5 h-5 text-white" />
+                  <MapIcon className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-white">
                   {selectedState.name}
