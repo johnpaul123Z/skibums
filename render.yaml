@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: skibums-job-board
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: |
+      npm install &&
+      npm run build &&
+      npx puppeteer browsers install chrome
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: NEXT_PUBLIC_MAPBOX_TOKEN
+        sync: false
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: false
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /opt/render/.cache/puppeteer/chrome/linux-127.0.6533.119/chrome-linux64/chrome
