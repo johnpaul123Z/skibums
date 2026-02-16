@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Alpine Modern Color Palette */
+  --snow-white: #FAFAFA;
+  --ice-blue: #E8F4F8;
+  --glacier-cyan: #00D2FF;
+  --mountain-slate: #2D3748;
+  --pine-green: #1A4731;
+  --sunset-amber: #FF6B35;
+  --powder-alert: #FF3366;
+  
+  /* Gradients */
+  --sky-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --mountain-shadow: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%);
+  
+  --background: #FAFAFA;
+  --foreground: #2D3748;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-snow-white: #FAFAFA;
+  --color-ice-blue: #E8F4F8;
+  --color-glacier-cyan: #00D2FF;
+  --color-mountain-slate: #2D3748;
+  --color-pine-green: #1A4731;
+  --color-sunset-amber: #FF6B35;
+  --color-powder-alert: #FF3366;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1A202C;
+    --foreground: #FAFAFA;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility classes */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
