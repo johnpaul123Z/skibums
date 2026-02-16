@@ -235,39 +235,40 @@ export function JobMap({ jobs }: JobMapProps) {
           exit={{ x: "100%" }}
           className="absolute top-0 right-0 bottom-0 w-full md:w-96 glass-dark backdrop-blur-xl overflow-y-auto"
         >
-          <div className="p-6">
-            <div className="flex items-start justify-between mb-4">
+          <div className="p-4 md:p-6">
+            {/* Close button - more prominent on mobile */}
+            <button
+              onClick={() => setSelectedResort(null)}
+              className="absolute top-4 right-4 z-10 p-3 md:p-2 bg-red-500/80 hover:bg-red-500 md:bg-white/10 md:hover:bg-white/20 rounded-lg transition"
+            >
+              <X className="w-6 h-6 md:w-5 md:h-5 text-white" />
+            </button>
+
+            <div className="mb-4 pr-12">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-1">
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-1">
                   {selectedResort.name}
                 </h2>
-                <p className="text-cyan-400">{selectedResort.state}</p>
-                <div className="flex items-center gap-2 mt-2 text-gray-300">
+                <p className="text-cyan-400 text-sm md:text-base">{selectedResort.state}</p>
+                <div className="flex items-center gap-2 mt-2 text-gray-300 text-sm">
                   <Briefcase className="w-4 h-4" />
                   <span>{selectedResort.jobCount} positions</span>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedResort(null)}
-                className="p-2 hover:bg-white/10 rounded-lg transition"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 pb-4">
               {selectedResort.jobs.map((job) => (
                 <motion.a
                   key={job.id}
                   href={job.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ scale: 1.02, x: 5 }}
                   whileTap={{ scale: 0.98 }}
-                  className="block p-5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/30 hover:border-cyan-400/50 rounded-xl transition-all cursor-pointer group"
+                  className="block p-4 md:p-5 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 hover:from-cyan-500/20 hover:to-blue-500/20 border border-cyan-500/30 hover:border-cyan-400/50 rounded-xl transition-all cursor-pointer group active:scale-98"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-white font-bold text-lg group-hover:text-cyan-400 transition-colors pr-2">
+                    <h3 className="text-white font-bold text-base md:text-lg group-hover:text-cyan-400 transition-colors pr-2">
                       {job.title}
                     </h3>
                     <motion.div
@@ -278,9 +279,9 @@ export function JobMap({ jobs }: JobMapProps) {
                       →
                     </motion.div>
                   </div>
-                  <p className="text-gray-400 text-sm mb-2">{job.type}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-green-400 text-sm font-mono font-semibold">
+                  <p className="text-gray-400 text-xs md:text-sm mb-2">{job.type}</p>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-green-400 text-xs md:text-sm font-mono font-semibold">
                       {job.salary}
                     </span>
                     {job.housing && (
@@ -289,8 +290,8 @@ export function JobMap({ jobs }: JobMapProps) {
                       </span>
                     )}
                   </div>
-                  <div className="mt-3 text-sm text-cyan-400 font-semibold group-hover:text-cyan-300">
-                    Click to view & apply →
+                  <div className="mt-3 text-xs md:text-sm text-cyan-400 font-semibold group-hover:text-cyan-300">
+                    Tap to view & apply →
                   </div>
                 </motion.a>
               ))}

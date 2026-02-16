@@ -13,7 +13,7 @@ interface SnowHeroProps {
 
 export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: SnowHeroProps) {
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       {/* Animated Snow Layer */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         {[...Array(80)].map((_, i) => (
@@ -50,7 +50,7 @@ export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: S
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4 py-20">
         {/* Animated Title */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -69,16 +69,16 @@ export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: S
             }}
             className="inline-block mb-4"
           >
-            <Snowflake className="w-16 h-16 text-cyan-400" strokeWidth={1.5} />
+            <Snowflake className="w-12 h-12 md:w-16 md:h-16 text-cyan-400" strokeWidth={1.5} />
           </motion.div>
           
-          <h1 className="text-6xl md:text-8xl font-bold text-white tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-white tracking-tight">
             Find Your{" "}
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
               Peak
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mt-4 font-light">
+          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mt-4 font-light px-4">
             Dream jobs at world-class ski resorts
           </p>
         </motion.div>
@@ -88,7 +88,7 @@ export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: S
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 flex justify-center gap-12 text-white"
+          className="mt-8 flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-12 text-white"
         >
           {[
             { label: "Active Jobs", value: totalJobs > 0 ? `${totalJobs}` : "240+" },
@@ -102,10 +102,10 @@ export default function SnowHero({ onFilterChange, totalJobs, filteredCount }: S
               transition={{ delay: 0.7 + idx * 0.1 }}
               className="text-center"
             >
-              <div className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 {stat.value}
               </div>
-              <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>

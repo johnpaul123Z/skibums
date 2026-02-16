@@ -39,7 +39,13 @@ interface JobCard3DProps {
 export function JobCard3D({ job }: JobCard3DProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Detect touch device on mount
+  useState(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  });
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -89,19 +95,20 @@ export function JobCard3D({ job }: JobCard3DProps) {
   return (
     <motion.div
       ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
+      onMouseMove={isTouchDevice ? undefined : handleMouseMove}
+      onMouseLeave={isTouchDevice ? undefined : handleMouseLeave}
+      style={isTouchDevice ? {} : {
         rotateX,
         rotateY,
         transformStyle: "preserve-3d",
       }}
-      whileHover={{ scale: 1.05 }}
-      className="relative w-full max-w-sm"
+      whileHover={isTouchDevice ? {} : { scale: 1.05 }}
+      whileTap={{ scale: 0.98 }}
+      className="relative w-full max-w-sm mx-auto"
     >
       <div
         className="relative rounded-2xl overflow-hidden shadow-2xl"
-        style={{
+        style={isTouchDevice ? {} : {
           transformStyle: "preserve-3d",
           transform: "translateZ(50px)",
         }}
@@ -206,7 +213,7 @@ export function JobCard3D({ job }: JobCard3DProps) {
             </div>
           </motion.div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <MountainButton
               variant="primary"
               className="flex-1 flex items-center justify-center gap-2"
@@ -226,7 +233,7 @@ export function JobCard3D({ job }: JobCard3DProps) {
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-3 glass rounded-xl text-white hover:bg-white/10 transition-colors"
+                className="px-4 py-3 glass rounded-xl text-white hover:bg-white/10 transition-colors text-center sm:text-left"
               >
                 View Details
               </motion.a>
