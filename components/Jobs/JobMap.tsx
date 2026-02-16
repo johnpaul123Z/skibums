@@ -5,7 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Job } from "@/components/Jobs/JobCard3D";
 import { motion } from "framer-motion";
-import { X, MapPin, Briefcase } from "lucide-react";
+import { X, MapPin, Briefcase, Map } from "lucide-react";
 
 // Mapbox token from environment variable
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -16,6 +16,15 @@ interface ResortLocation {
   state: string;
   jobCount: number;
   jobs: Job[];
+}
+
+interface StateLocation {
+  name: string;
+  abbreviation: string;
+  coordinates: [number, number]; // Center coordinates
+  jobCount: number;
+  jobs: Job[];
+  resorts: string[];
 }
 
 interface JobMapProps {
@@ -81,11 +90,53 @@ const RESORT_COORDS: { [key: string]: [number, number] } = {
   "default": [-110.0, 42.0], // Rocky Mountains center
 };
 
+// State center coordinates for state-level viewing
+const STATE_CENTERS: { [key: string]: [number, number] } = {
+  "Colorado": [-105.7821, 39.5501],
+  "CO": [-105.7821, 39.5501],
+  "Utah": [-111.0937, 39.3200],
+  "UT": [-111.0937, 39.3200],
+  "California": [-119.4179, 38.5816],
+  "CA": [-119.4179, 38.5816],
+  "Vermont": [-72.5778, 44.5588],
+  "VT": [-72.5778, 44.5588],
+  "Montana": [-110.3626, 46.8797],
+  "MT": [-110.3626, 46.8797],
+  "Wyoming": [-107.2903, 43.0760],
+  "WY": [-107.2903, 43.0760],
+  "Washington": [-121.4944, 47.7511],
+  "WA": [-121.4944, 47.7511],
+  "Idaho": [-114.7420, 44.0682],
+  "ID": [-114.7420, 44.0682],
+  "New Hampshire": [-71.5724, 43.1939],
+  "NH": [-71.5724, 43.1939],
+  "Maine": [-69.4455, 45.2538],
+  "ME": [-69.4455, 45.2538],
+  "New York": [-74.2179, 42.1497],
+  "NY": [-74.2179, 42.1497],
+  "Pennsylvania": [-77.1945, 40.8734],
+  "PA": [-77.1945, 40.8734],
+  "Maryland": [-77.4360, 39.0458],
+  "MD": [-77.4360, 39.0458],
+  "West Virginia": [-80.4549, 38.5976],
+  "WV": [-80.4549, 38.5976],
+  "Michigan": [-85.6024, 44.3148],
+  "MI": [-85.6024, 44.3148],
+  "British Columbia": [-122.9574, 50.1163],
+  "BC": [-122.9574, 50.1163],
+  "Quebec": [-74.5833, 46.2097],
+  "QC": [-74.5833, 46.2097],
+  "Ontario": [-80.3208, 44.5000],
+  "ON": [-80.3208, 44.5000],
+};
+
 export function JobMap({ jobs }: JobMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [selectedResort, setSelectedResort] = useState<ResortLocation | null>(null);
+  const [selectedState, setSelectedState] = useState<StateLocation | null>(null);
   const [resortLocations, setResortLocations] = useState<ResortLocation[]>([]);
+  const [stateLocations, setStateLocations] = useState<StateLocation[]>([]);
 
   useEffect(() => {
     // Group jobs by resort (improved matching)
@@ -129,6 +180,66 @@ export function JobMap({ jobs }: JobMapProps) {
     );
 
     setResortLocations(locations);
+
+    // Group jobs by state
+    const stateMap = new Map<string, Job[]>();
+    const stateResorts = new Map<string, Set<string>>();
+    
+    jobs.forEach((job) => {
+      // Extract state from location (e.g., "Vail, CO" -> "CO")
+      const locationParts = job.location.split(",");
+      let state = locationParts[locationParts.length - 1]?.trim() || "";
+      
+      // Normalize state names
+      if (state.length === 2) {
+        // It's an abbreviation, that's fine
+      } else {
+        // Try to match full state name
+        const stateMapping: { [key: string]: string } = {
+          "Colorado": "CO",
+          "Utah": "UT",
+          "California": "CA",
+          "Vermont": "VT",
+          "Montana": "MT",
+          "Wyoming": "WY",
+          "Washington": "WA",
+          "Idaho": "ID",
+          "New Hampshire": "NH",
+          "Maine": "ME",
+          "New York": "NY",
+          "Pennsylvania": "PA",
+          "Maryland": "MD",
+          "West Virginia": "WV",
+          "Michigan": "MI",
+          "British Columbia": "BC",
+          "Quebec": "QC",
+          "Ontario": "ON",
+        };
+        state = stateMapping[state] || state;
+      }
+
+      if (state) {
+        if (!stateMap.has(state)) {
+          stateMap.set(state, []);
+          stateResorts.set(state, new Set());
+        }
+        stateMap.get(state)!.push(job);
+        stateResorts.get(state)!.add(job.resort);
+      }
+    });
+
+    const states: StateLocation[] = Array.from(stateMap.entries())
+      .filter(([state]) => STATE_CENTERS[state]) // Only include states we have coordinates for
+      .map(([state, jobs]) => ({
+        name: state,
+        abbreviation: state,
+        coordinates: STATE_CENTERS[state],
+        jobCount: jobs.length,
+        jobs,
+        resorts: Array.from(stateResorts.get(state) || []),
+      }));
+
+    setStateLocations(states);
   }, [jobs]);
 
   useEffect(() => {
@@ -144,6 +255,53 @@ export function JobMap({ jobs }: JobMapProps) {
     });
 
     map.current.on("load", () => {
+      // Add state markers (larger, different style)
+      stateLocations.forEach((state) => {
+        const stateEl = document.createElement("div");
+        stateEl.className = "state-marker";
+        stateEl.style.cssText = `
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #8B5CF6, #6366F1);
+          border: 3px solid white;
+          border-radius: 12px;
+          cursor: pointer;
+          color: white;
+          font-weight: bold;
+          font-size: 14px;
+          box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
+          transition: all 0.2s;
+          white-space: nowrap;
+        `;
+        stateEl.innerHTML = `${state.abbreviation}<br/><span style="font-size: 10px;">${state.jobCount} jobs</span>`;
+        
+        stateEl.addEventListener("mouseenter", () => {
+          stateEl.style.transform = "scale(1.15)";
+          stateEl.style.boxShadow = "0 8px 20px rgba(139, 92, 246, 0.8)";
+        });
+        stateEl.addEventListener("mouseleave", () => {
+          stateEl.style.transform = "scale(1)";
+          stateEl.style.boxShadow = "0 6px 16px rgba(139, 92, 246, 0.6)";
+        });
+        stateEl.addEventListener("click", (e) => {
+          e.stopPropagation();
+          setSelectedState(state);
+          setSelectedResort(null); // Close resort panel if open
+        });
+
+        new mapboxgl.Marker(stateEl)
+          .setLngLat(state.coordinates)
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 }).setHTML(
+              `<div style="padding: 8px;">
+                <h3 style="font-weight: bold; margin-bottom: 4px; color: #8B5CF6;">${state.name}</h3>
+                <p style="color: #00D2FF; margin-bottom: 4px;">${state.jobCount} total positions</p>
+                <p style="font-size: 12px; color: #9CA3AF;">${state.resorts.length} resorts</p>
+              </div>`
+            )
+          )
+          .addTo(map.current!);
+      });
+
       // Add markers for each resort
       resortLocations.forEach((resort) => {
         // Create custom marker element
@@ -172,13 +330,15 @@ export function JobMap({ jobs }: JobMapProps) {
         el.addEventListener("mouseleave", () => {
           el.style.transform = "scale(1)";
         });
-        el.addEventListener("click", () => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
           // If only 1 job at this resort, open it directly
           if (resort.jobCount === 1 && resort.jobs[0]?.url) {
             window.open(resort.jobs[0].url, '_blank', 'noopener,noreferrer');
           } else {
             // Multiple jobs - show the panel
             setSelectedResort(resort);
+            setSelectedState(null); // Close state panel if open
           }
         });
 
@@ -203,7 +363,7 @@ export function JobMap({ jobs }: JobMapProps) {
         map.current = null;
       }
     };
-  }, [resortLocations]);
+  }, [resortLocations, stateLocations]);
 
   return (
     <div className="relative w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden">
@@ -211,21 +371,107 @@ export function JobMap({ jobs }: JobMapProps) {
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Legend */}
-      <div className="absolute top-2 left-2 md:top-4 md:left-4 glass-dark rounded-xl p-2 md:p-4 backdrop-blur-xl text-xs md:text-base">
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 glass-dark rounded-xl p-2 md:p-4 backdrop-blur-xl text-xs md:text-base max-w-[200px]">
         <div className="flex items-center gap-2 mb-2">
-          <MapPin className="w-5 h-5 text-cyan-400" />
-          <span className="text-white font-bold">Resort Locations</span>
+          <Map className="w-4 h-4 md:w-5 md:h-5 text-purple-400" />
+          <span className="text-white font-bold text-xs md:text-sm">Map Guide</span>
         </div>
-        <p className="text-gray-300 text-sm">
-          Click markers to view & apply for jobs
-        </p>
-        <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
-          <div className="w-6 h-6 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+        
+        {/* State markers legend */}
+        <div className="mb-3 pb-2 border-b border-white/10">
+          <div className="flex items-center gap-2 text-xs text-gray-300 mb-1">
+            <div className="px-2 py-1 bg-gradient-to-br from-purple-500 to-indigo-600 rounded text-white text-[10px] font-bold">
+              ST
+            </div>
+            <span>State (all jobs)</span>
+          </div>
+        </div>
+
+        {/* Resort markers legend */}
+        <div className="flex items-center gap-2 text-xs text-gray-300">
+          <div className="w-5 h-5 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
             #
           </div>
-          <span>= Job count at resort</span>
+          <span>Resort jobs</span>
         </div>
       </div>
+
+      {/* Selected State Panel */}
+      {selectedState && (
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          className="absolute top-0 right-0 bottom-0 w-full md:w-96 glass-dark backdrop-blur-xl overflow-y-auto z-20"
+        >
+          <div className="p-4 md:p-6">
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedState(null)}
+              className="absolute top-4 right-4 z-10 p-3 md:p-2 bg-red-500/80 hover:bg-red-500 md:bg-white/10 md:hover:bg-white/20 rounded-lg transition"
+            >
+              <X className="w-6 h-6 md:w-5 md:h-5 text-white" />
+            </button>
+
+            <div className="mb-4 pr-12">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+                  <Map className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold text-white">
+                  {selectedState.name}
+                </h2>
+              </div>
+              <p className="text-purple-400 text-sm md:text-base">
+                {selectedState.resorts.length} resorts • {selectedState.jobCount} total positions
+              </p>
+            </div>
+
+            <div className="space-y-3 pb-4">
+              {selectedState.jobs.map((job) => (
+                <motion.a
+                  key={job.id}
+                  href={job.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileTap={{ scale: 0.98 }}
+                  className="block p-4 md:p-5 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 hover:from-purple-500/20 hover:to-indigo-500/20 border border-purple-500/30 hover:border-purple-400/50 rounded-xl transition-all cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 pr-2">
+                      <h3 className="text-white font-bold text-base md:text-lg group-hover:text-purple-400 transition-colors">
+                        {job.title}
+                      </h3>
+                      <p className="text-cyan-400 text-sm">{job.resort}</p>
+                    </div>
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="text-purple-400 text-xl flex-shrink-0"
+                    >
+                      →
+                    </motion.div>
+                  </div>
+                  <p className="text-gray-400 text-xs md:text-sm mb-2">{job.type}</p>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-green-400 text-xs md:text-sm font-mono font-semibold">
+                      {job.salary}
+                    </span>
+                    {job.housing && (
+                      <span className="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded-full">
+                        🏠 Housing
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 text-xs md:text-sm text-purple-400 font-semibold group-hover:text-purple-300">
+                    Tap to view & apply →
+                  </div>
+                </motion.a>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Selected Resort Panel */}
       {selectedResort && (
