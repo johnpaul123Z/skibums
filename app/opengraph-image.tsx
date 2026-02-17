@@ -31,10 +31,11 @@ export default async function Image() {
             background: "linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%)",
           }}
         >
-          <span style={{ fontSize: 48 }}>🎿</span>
+          <span style={{ display: "flex", fontSize: 48 }}>🎿</span>
         </div>
         <div
           style={{
+            display: "flex",
             fontSize: 72,
             fontWeight: 800,
             color: "white",
@@ -46,6 +47,7 @@ export default async function Image() {
         </div>
         <div
           style={{
+            display: "flex",
             fontSize: 28,
             color: "#94a3b8",
             maxWidth: 700,
@@ -57,6 +59,7 @@ export default async function Image() {
         </div>
         <div
           style={{
+            display: "flex",
             marginTop: 40,
             fontSize: 20,
             color: "#64748b",

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://skijobs.net";
 
-export const viewport = { width: "device-width", initialScale: 1 };
+export const viewport = { width: "device-width", initialScale: 1, themeColor: "#0f172a" };
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -70,7 +70,6 @@ export const metadata: Metadata = {
   category: "jobs",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon", apple: "/apple-icon" },
-  themeColor: "#0f172a",
 };
 
 const jsonLd = {
