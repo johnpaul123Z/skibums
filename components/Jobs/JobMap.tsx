@@ -271,22 +271,21 @@ export function JobMap({ jobs }: JobMapProps) {
           font-weight: bold;
           font-size: 14px;
           box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
-          transition: transform 0.2s, box-shadow 0.2s;
+          transition: box-shadow 0.2s, border-color 0.2s;
           white-space: nowrap;
           pointer-events: auto;
           user-select: none;
           touch-action: none;
-          transform-origin: center center;
         `;
         stateEl.innerHTML = `${state.abbreviation}<br/><span style="font-size: 10px;">${state.jobCount} jobs</span>`;
         
         stateEl.addEventListener("mouseenter", () => {
-          stateEl.style.transform = "scale(1.15)";
-          stateEl.style.boxShadow = "0 8px 20px rgba(139, 92, 246, 0.8)";
+          stateEl.style.boxShadow = "0 8px 24px rgba(139, 92, 246, 0.9)";
+          stateEl.style.borderColor = "rgba(255,255,255,0.9)";
         });
         stateEl.addEventListener("mouseleave", () => {
-          stateEl.style.transform = "scale(1)";
           stateEl.style.boxShadow = "0 6px 16px rgba(139, 92, 246, 0.6)";
+          stateEl.style.borderColor = "white";
         });
         const onStateAction = () => {
           setSelectedState(state);
@@ -330,18 +329,19 @@ export function JobMap({ jobs }: JobMapProps) {
           font-weight: bold;
           font-size: 12px;
           box-shadow: 0 4px 12px rgba(0, 210, 255, 0.5);
-          transition: transform 0.2s;
+          transition: box-shadow 0.2s, border-color 0.2s;
           pointer-events: auto;
           user-select: none;
           touch-action: none;
-          transform-origin: center center;
         `;
         el.textContent = resort.jobCount.toString();
         el.addEventListener("mouseenter", () => {
-          el.style.transform = "scale(1.2)";
+          el.style.boxShadow = "0 6px 20px rgba(0, 210, 255, 0.8)";
+          el.style.borderColor = "rgba(255,255,255,0.95)";
         });
         el.addEventListener("mouseleave", () => {
-          el.style.transform = "scale(1)";
+          el.style.boxShadow = "0 4px 12px rgba(0, 210, 255, 0.5)";
+          el.style.borderColor = "white";
         });
         const onResortAction = () => {
           if (resort.jobCount === 1 && resort.jobs[0]?.url) {
