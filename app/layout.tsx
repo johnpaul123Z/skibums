@@ -70,6 +70,16 @@ export const metadata: Metadata = {
   category: "jobs",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon", apple: "/apple-icon" },
+  // Search console verification
+  verification: {
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    }),
+    other: {
+      "msvalidate.01":
+        process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || "6385646C726D55C33263D9FF92F36434",
+    },
+  },
 };
 
 const jsonLd = {
