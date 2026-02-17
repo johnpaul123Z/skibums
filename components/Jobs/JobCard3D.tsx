@@ -194,24 +194,21 @@ export function JobCard3D({ job }: JobCard3DProps) {
             {job.company && (
               <div className="flex items-center text-gray-400 text-xs">
                 <Briefcase className="w-3 h-3 mr-2" />
-                {job.company === 'Vail' ? 'Epic Pass' : 'Ikon Pass'}
+                {job.company === 'Vail' ? 'Epic Pass' : job.company === 'Alterra' ? 'Ikon Pass' : 'Boyne'}
               </div>
             )}
           </div>
 
-          {/* Lift Ticket Slide-out */}
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            whileHover={{ height: "auto", opacity: 1 }}
-            className="overflow-hidden"
-          >
-            <div className="border-t border-white/10 pt-4 mb-4">
-              <div className="flex gap-2 text-xs text-gray-400">
-                <span className="px-2 py-1 bg-white/5 rounded">Seasonal</span>
-                <span className="px-2 py-1 bg-white/5 rounded">Housing Available</span>
-              </div>
+          {/* Job Description */}
+          {job.description && (
+            <div className="mb-4 pb-4 border-b border-white/10">
+              <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+                {job.description}
+              </p>
             </div>
-          </motion.div>
+          )}
+
+          {/* Lift Ticket Slide-out - Removed, replaced with description */}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <MountainButton

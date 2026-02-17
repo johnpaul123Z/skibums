@@ -23,6 +23,60 @@ export interface ScrapedJob {
   url: string;
   category: string;
   company: 'Vail' | 'Alterra' | 'Boyne';
+  description?: string; // Job description summary
+}
+
+/**
+ * Scrape job description from individual Vail job page
+ */
+async function scrapeVailJobDescription(url: string): Promise<string> {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      },
+      timeout: 5000,
+    });
+
+    const $ = cheerio.load(response.data);
+    
+    // Try multiple selectors for job description
+    let description = '';
+    
+    // Look for common job description containers
+    const descriptionSelectors = [
+      '.job-description',
+      '#job-description',
+      '[class*="description"]',
+      '[class*="job-details"]',
+      '.jobdescription',
+      'div[itemprop="description"]',
+    ];
+
+    for (const selector of descriptionSelectors) {
+      const text = $(selector).first().text().trim();
+      if (text && text.length > 50) {
+        description = text;
+        break;
+      }
+    }
+
+    // If no description found, try to get any paragraph text
+    if (!description) {
+      const paragraphs = $('p').map((i, el) => $(el).text().trim()).get();
+      description = paragraphs.filter(p => p.length > 50).slice(0, 3).join(' ');
+    }
+
+    // Truncate to a reasonable length (first 200 characters)
+    if (description.length > 200) {
+      description = description.substring(0, 200).trim() + '...';
+    }
+
+    return description || 'Job description available on application page.';
+  } catch (error) {
+    console.error(`Error fetching description from ${url}:`, error);
+    return 'Click to view full job details.';
+  }
 }
 
 /**
@@ -93,7 +147,19 @@ export async function scrapeAllVailCategories(): Promise<ScrapedJob[]> {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  console.log(`\n🎉 Total jobs scraped: ${allJobs.length}`);
+  // Fetch descriptions for a sample of jobs (first 20 to avoid too many requests)
+  console.log('\n📝 Fetching job descriptions...');
+  const jobsToEnrich = allJobs.slice(0, 20);
+  
+  for (let i = 0; i < jobsToEnrich.length; i++) {
+    const job = jobsToEnrich[i];
+    console.log(`  ${i + 1}/${jobsToEnrich.length}: ${job.title}`);
+    job.description = await scrapeVailJobDescription(job.url);
+    // Small delay to be respectful
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  console.log(`\n🎉 Total jobs scraped: ${allJobs.length} (${jobsToEnrich.length} with descriptions)`);
   return allJobs;
 }
 
@@ -247,7 +313,7 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
       company: job.company,
       housing: hasHousing,
       featured: index < 3,
-      description: `Join the team at ${job.resort}! This is an excellent opportunity to work at one of ${companyName}'s world-class ski destinations.`,
+      description: job.description || `Join the team at ${job.resort}! This is an excellent opportunity to work at one of ${companyName}'s world-class ski destinations.`,
       requirements: [
         title.includes('certified') ? 'PSIA/AASI Certification required' : 'Experience preferred',
         category.includes('ski') ? 'Intermediate+ skiing/riding ability' : 'Physical fitness required',
