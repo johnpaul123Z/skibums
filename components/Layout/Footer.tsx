@@ -12,10 +12,21 @@ export function Footer() {
   ];
 
   const footerLinks = {
-    "For Job Seekers": ["Browse Jobs", "Career Advice", "Resume Tips", "Salary Guide"],
-    "For Employers": ["Post a Job", "Pricing", "Success Stories", "Contact Sales"],
-    Company: ["About Us", "Blog", "Careers", "Press"],
-    Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
+    "Quick Links": [
+      { label: "Browse Jobs", href: "#jobs" },
+      { label: "View Map", href: "#jobs" },
+      { label: "About", href: "#about" },
+    ],
+    "Resort Partners": [
+      { label: "Vail Resorts (Epic Pass)", href: "https://www.vailresortscareers.com" },
+      { label: "Alterra (Ikon Pass)", href: "https://jobs.alterramtnco.com" },
+      { label: "Boyne Resorts", href: "https://careers.boyneresorts.com" },
+    ],
+    "Resources": [
+      { label: "All Resorts", href: "#resorts" },
+      { label: "Housing Info", href: "#jobs" },
+      { label: "Contact", href: "#contact" },
+    ],
   };
 
   return (
@@ -57,12 +68,14 @@ export function Footer() {
               <h3 className="text-white font-bold mb-4">{category}</h3>
               <ul className="space-y-2">
                 {links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <a
-                      href="#"
+                      href={link.href}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className="text-gray-400 hover:text-cyan-400 transition-colors text-sm"
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}
@@ -76,9 +89,13 @@ export function Footer() {
           <p className="text-gray-500 text-sm">
             © 2026 SkiJobs. All rights reserved.
           </p>
-          <p className="text-gray-500 text-sm">
-            Made with ❄️ for the ski community
-          </p>
+          <div className="flex gap-4 text-gray-500 text-sm">
+            <a href="#about" className="hover:text-cyan-400 transition-colors">Privacy</a>
+            <span>•</span>
+            <a href="#about" className="hover:text-cyan-400 transition-colors">Terms</a>
+            <span>•</span>
+            <p className="text-gray-500">Made with ❄️ for the ski community</p>
+          </div>
         </div>
       </div>
     </footer>
