@@ -19,7 +19,7 @@ export const viewport = { width: "device-width", initialScale: 1, themeColor: "#
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "SkiJobs – Ski Resort Jobs | Vail, Alterra, Boyne Careers",
+    default: "SkiJobs",
     template: "%s | SkiJobs",
   },
   description:
