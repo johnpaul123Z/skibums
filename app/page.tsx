@@ -270,6 +270,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-800 to-slate-900">
+        <div className="container mx-auto max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+              About{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                SkiJobs
+              </span>
+            </h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-cyan-400 to-blue-500 mx-auto mb-8"></div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <GlassCard className="p-6 md:p-8">
+              <div className="space-y-6 text-gray-300 leading-relaxed">
+                <p className="text-base md:text-lg">
+                  <span className="text-cyan-400 font-bold">SkiJobs</span> is your gateway to finding dream careers at world-class ski resorts. 
+                  We aggregate job opportunities from the largest resort operators in North America, including <span className="text-white font-semibold">Vail Resorts</span> (Epic Pass), 
+                  <span className="text-white font-semibold"> Alterra Mountain Company</span> (Ikon Pass), and <span className="text-white font-semibold">Boyne Resorts</span>.
+                </p>
+                
+                <p className="text-base md:text-lg">
+                  Whether you're a certified ski instructor, aspiring ski patrol, lift operator, chef, or hospitality professional, 
+                  we connect you with hundreds of positions across <span className="text-cyan-400 font-semibold">47 resorts</span> spanning Colorado, Utah, California, Vermont, and beyond.
+                </p>
+
+                <p className="text-base md:text-lg">
+                  Our platform makes it easy to explore opportunities by location, search for specific roles, filter by housing availability, 
+                  and discover competitive salaries. Live your best life on the mountain while building a rewarding career in the ski industry.
+                </p>
+
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-sm text-gray-400 italic">
+                    🎿 Jobs updated daily from Vail Resorts, Alterra Mountain Company, and Boyne Resorts career pages.
+                  </p>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
