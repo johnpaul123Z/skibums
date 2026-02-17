@@ -60,3 +60,11 @@ body {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Mapbox: ensure marker layer receives clicks on desktop (not captured by map drag) */
+.job-map-container .mapboxgl-marker {
+  pointer-events: auto !important;
+}
+.job-map-container .mapboxgl-marker div {
+  pointer-events: auto !important;
+}

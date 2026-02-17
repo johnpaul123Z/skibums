@@ -256,9 +256,11 @@ export function JobMap({ jobs }: JobMapProps) {
 
     map.current.on("load", () => {
       // Add state markers (larger, different style)
-      stateLocations.forEach((state) => {
+      stateLocations.forEach((state, stateIdx) => {
         const stateEl = document.createElement("div");
         stateEl.className = "state-marker";
+        stateEl.setAttribute("data-marker-type", "state");
+        stateEl.setAttribute("data-marker-index", String(stateIdx));
         stateEl.style.cssText = `
           padding: 8px 16px;
           background: linear-gradient(135deg, #8B5CF6, #6366F1);
@@ -271,6 +273,9 @@ export function JobMap({ jobs }: JobMapProps) {
           box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
           transition: all 0.2s;
           white-space: nowrap;
+          pointer-events: auto;
+          user-select: none;
+          touch-action: none;
         `;
         stateEl.innerHTML = `${state.abbreviation}<br/><span style="font-size: 10px;">${state.jobCount} jobs</span>`;
         
@@ -282,31 +287,34 @@ export function JobMap({ jobs }: JobMapProps) {
           stateEl.style.transform = "scale(1)";
           stateEl.style.boxShadow = "0 6px 16px rgba(139, 92, 246, 0.6)";
         });
-        stateEl.addEventListener("click", (e) => {
-          e.stopPropagation();
+        const onStateAction = () => {
           setSelectedState(state);
-          setSelectedResort(null); // Close resort panel if open
+          setSelectedResort(null);
+        };
+        stateEl.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onStateAction();
+        });
+        stateEl.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onStateAction();
         });
 
-        new mapboxgl.Marker(stateEl)
+        new mapboxgl.Marker({ element: stateEl })
           .setLngLat(state.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<div style="padding: 8px;">
-                <h3 style="font-weight: bold; margin-bottom: 4px; color: #8B5CF6;">${state.name}</h3>
-                <p style="color: #00D2FF; margin-bottom: 4px;">${state.jobCount} total positions</p>
-                <p style="font-size: 12px; color: #9CA3AF;">${state.resorts.length} resorts</p>
-              </div>`
-            )
-          )
           .addTo(map.current!);
+        stateEl.style.pointerEvents = "auto";
       });
 
       // Add markers for each resort
-      resortLocations.forEach((resort) => {
+      resortLocations.forEach((resort, resortIdx) => {
         // Create custom marker element
         const el = document.createElement("div");
         el.className = "resort-marker";
+        el.setAttribute("data-marker-type", "resort");
+        el.setAttribute("data-marker-index", String(resortIdx));
         el.style.cssText = `
           width: 40px;
           height: 40px;
@@ -322,6 +330,9 @@ export function JobMap({ jobs }: JobMapProps) {
           font-size: 12px;
           box-shadow: 0 4px 12px rgba(0, 210, 255, 0.5);
           transition: transform 0.2s;
+          pointer-events: auto;
+          user-select: none;
+          touch-action: none;
         `;
         el.textContent = resort.jobCount.toString();
         el.addEventListener("mouseenter", () => {
@@ -330,30 +341,53 @@ export function JobMap({ jobs }: JobMapProps) {
         el.addEventListener("mouseleave", () => {
           el.style.transform = "scale(1)";
         });
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          // If only 1 job at this resort, open it directly
+        const onResortAction = () => {
           if (resort.jobCount === 1 && resort.jobs[0]?.url) {
             window.open(resort.jobs[0].url, '_blank', 'noopener,noreferrer');
           } else {
-            // Multiple jobs - show the panel
             setSelectedResort(resort);
-            setSelectedState(null); // Close state panel if open
+            setSelectedState(null);
           }
+        };
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onResortAction();
+        });
+        el.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onResortAction();
         });
 
-        // Add marker to map
-        new mapboxgl.Marker(el)
+        new mapboxgl.Marker({ element: el })
           .setLngLat(resort.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(
-              `<div style="padding: 8px;">
-                <h3 style="font-weight: bold; margin-bottom: 4px;">${resort.name}</h3>
-                <p style="color: #00D2FF;">${resort.jobCount} positions available</p>
-              </div>`
-            )
-          )
           .addTo(map.current!);
+        el.style.pointerEvents = "auto";
+      });
+
+      // Fallback: handle map click so desktop clicks on markers still work if map captures the event
+      map.current.on("click", (e) => {
+        const target = e.originalEvent?.target as HTMLElement | null;
+        if (!target) return;
+        const markerEl = target.closest?.("[data-marker-type]") as HTMLElement | null;
+        if (!markerEl) return;
+        const type = markerEl.getAttribute("data-marker-type");
+        const idx = markerEl.getAttribute("data-marker-index");
+        if (idx === null) return;
+        const i = parseInt(idx, 10);
+        if (type === "state" && stateLocations[i]) {
+          setSelectedState(stateLocations[i]);
+          setSelectedResort(null);
+        } else if (type === "resort" && resortLocations[i]) {
+          const resort = resortLocations[i];
+          if (resort.jobCount === 1 && resort.jobs[0]?.url) {
+            window.open(resort.jobs[0].url, "_blank", "noopener,noreferrer");
+          } else {
+            setSelectedResort(resort);
+            setSelectedState(null);
+          }
+        }
       });
     });
 
@@ -366,8 +400,8 @@ export function JobMap({ jobs }: JobMapProps) {
   }, [resortLocations, stateLocations]);
 
   return (
-    <div className="relative w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden">
-      {/* Map Container */}
+    <div className="relative w-full h-[400px] md:h-[600px] rounded-2xl overflow-hidden job-map-container">
+      {/* Map Container - marker layer must receive pointer events on desktop */}
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Legend */}
