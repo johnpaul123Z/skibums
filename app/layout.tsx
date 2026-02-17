@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@/components/Analytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
     "Ikon Pass jobs",
     "Alterra jobs",
     "Boyne Resorts jobs",
+    "Powdr jobs",
     "mountain jobs",
     "ski patrol jobs",
     "resort hospitality jobs",
@@ -137,6 +139,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <Analytics />
         {children}
       </body>
     </html>
