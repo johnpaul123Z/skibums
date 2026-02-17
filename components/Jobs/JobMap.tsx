@@ -271,11 +271,12 @@ export function JobMap({ jobs }: JobMapProps) {
           font-weight: bold;
           font-size: 14px;
           box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
-          transition: all 0.2s;
+          transition: transform 0.2s, box-shadow 0.2s;
           white-space: nowrap;
           pointer-events: auto;
           user-select: none;
           touch-action: none;
+          transform-origin: center center;
         `;
         stateEl.innerHTML = `${state.abbreviation}<br/><span style="font-size: 10px;">${state.jobCount} jobs</span>`;
         
@@ -302,7 +303,7 @@ export function JobMap({ jobs }: JobMapProps) {
           onStateAction();
         });
 
-        new mapboxgl.Marker({ element: stateEl })
+        new mapboxgl.Marker({ element: stateEl, anchor: "center" })
           .setLngLat(state.coordinates)
           .addTo(map.current!);
         stateEl.style.pointerEvents = "auto";
@@ -333,6 +334,7 @@ export function JobMap({ jobs }: JobMapProps) {
           pointer-events: auto;
           user-select: none;
           touch-action: none;
+          transform-origin: center center;
         `;
         el.textContent = resort.jobCount.toString();
         el.addEventListener("mouseenter", () => {
@@ -360,7 +362,7 @@ export function JobMap({ jobs }: JobMapProps) {
           onResortAction();
         });
 
-        new mapboxgl.Marker({ element: el })
+        new mapboxgl.Marker({ element: el, anchor: "center" })
           .setLngLat(resort.coordinates)
           .addTo(map.current!);
         el.style.pointerEvents = "auto";
