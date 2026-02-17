@@ -199,42 +199,18 @@ export function JobCard3D({ job }: JobCard3DProps) {
             )}
           </div>
 
-          {/* Job Description */}
-          {job.description && (
-            <div className="mb-4 pb-4 border-b border-white/10">
-              <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-                {job.description}
-              </p>
-            </div>
-          )}
-
-          {/* Lift Ticket Slide-out - Removed, replaced with description */}
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <MountainButton
-              variant="primary"
-              className="flex-1 flex items-center justify-center gap-2"
-              onClick={() => {
-                if (job.url) {
-                  window.open(job.url, '_blank', 'noopener,noreferrer');
-                }
-              }}
-            >
-              <Briefcase className="w-4 h-4" />
-              Apply Now
-            </MountainButton>
-            {job.url && (
-              <motion.a
-                href={job.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-3 glass rounded-xl text-white hover:bg-white/10 transition-colors text-center sm:text-left"
-              >
-                View Details
-              </motion.a>
-            )}
+          <MountainButton
+            variant="primary"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={() => {
+              if (job.url) {
+                window.open(job.url, '_blank', 'noopener,noreferrer');
+              }
+            }}
+          >
+            <Briefcase className="w-4 h-4" />
+            Apply Now
+          </MountainButton>
           </div>
         </div>
       </div>
