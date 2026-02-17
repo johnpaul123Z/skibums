@@ -48,7 +48,6 @@ export function Navigation() {
                 {item.label}
               </motion.a>
             ))}
-            <MountainButton variant="primary">Post a Job</MountainButton>
           </div>
 
           {/* Mobile Menu Button */}
@@ -77,11 +76,6 @@ export function Navigation() {
                 {item.label}
               </a>
             ))}
-            <div className="mt-4">
-              <MountainButton variant="primary" className="w-full">
-                Post a Job
-              </MountainButton>
-            </div>
           </motion.div>
         )}
       </div>
