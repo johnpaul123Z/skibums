@@ -211,7 +211,6 @@ export function JobCard3D({ job }: JobCard3DProps) {
             <Briefcase className="w-4 h-4" />
             Apply Now
           </MountainButton>
-          </div>
         </div>
       </div>
     </motion.div>
