@@ -147,19 +147,7 @@ export async function scrapeAllVailCategories(): Promise<ScrapedJob[]> {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  // Fetch descriptions for a sample of jobs (first 20 to avoid too many requests)
-  console.log('\n📝 Fetching job descriptions...');
-  const jobsToEnrich = allJobs.slice(0, 20);
-  
-  for (let i = 0; i < jobsToEnrich.length; i++) {
-    const job = jobsToEnrich[i];
-    console.log(`  ${i + 1}/${jobsToEnrich.length}: ${job.title}`);
-    job.description = await scrapeVailJobDescription(job.url);
-    // Small delay to be respectful
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-
-  console.log(`\n🎉 Total jobs scraped: ${allJobs.length} (${jobsToEnrich.length} with descriptions)`);
+  console.log(`\n🎉 Total jobs scraped: ${allJobs.length}`);
   return allJobs;
 }
 
@@ -506,24 +494,128 @@ export async function scrapeBoyneJobs(): Promise<ScrapedJob[]> {
   }
 }
 
+/** Run a promise with a timeout; on timeout return fallback (e.g. []). */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 /**
- * Scrape all jobs from Vail, Alterra, and Boyne
+ * Alterra fallback: fetch HTML with axios and parse job links (no Puppeteer).
+ */
+async function scrapeAlterraJobsAxios(): Promise<ScrapedJob[]> {
+  try {
+    const { data } = await axios.get('https://jobs.alterramtnco.com/jobs', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      timeout: 15000,
+    });
+    const $ = cheerio.load(data);
+    const jobs: ScrapedJob[] = [];
+    $('a[href*="/job/"]').each((_, el) => {
+      const href = $(el).attr('href')?.trim();
+      const title = $(el).text().trim();
+      if (href && title && title.length > 2) {
+        const url = href.startsWith('http') ? href : `https://jobs.alterramtnco.com${href}`;
+        const urlMatch = url.match(/\/([^/]+)\/job\//);
+        const resort = urlMatch ? urlMatch[1].replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) : 'Alterra Resort';
+        jobs.push({
+          title,
+          resort,
+          location: 'Various Locations',
+          shiftType: 'Seasonal/Year-round',
+          url,
+          category: 'All Departments',
+          company: 'Alterra',
+        });
+      }
+    });
+    const seen = new Set<string>();
+    const unique = jobs.filter((j) => {
+      const key = j.url;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    console.log(`✅ Alterra (axios fallback): ${unique.length} jobs`);
+    return unique.slice(0, 80);
+  } catch (e) {
+    console.error('Alterra axios fallback failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Boyne fallback: fetch HTML with axios and parse job links (no Puppeteer).
+ */
+async function scrapeBoyneJobsAxios(): Promise<ScrapedJob[]> {
+  try {
+    const { data } = await axios.get('https://careers.boyneresorts.com/all/jobs', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      timeout: 15000,
+    });
+    const $ = cheerio.load(data);
+    const jobs: ScrapedJob[] = [];
+    $('a[href*="/job/"]').each((_, el) => {
+      const href = $(el).attr('href')?.trim();
+      const title = $(el).text().trim() || $(el).find('.job-title, .jobtitle, [class*="title"]').text().trim();
+      if (href && title && title.length > 2) {
+        const url = href.startsWith('http') ? href : `https://careers.boyneresorts.com${href}`;
+        jobs.push({
+          title,
+          resort: 'Boyne Resort',
+          location: 'Various Locations',
+          shiftType: 'Seasonal/Year-round',
+          url,
+          category: 'All Departments',
+          company: 'Boyne',
+        });
+      }
+    });
+    const seen = new Set<string>();
+    const unique = jobs.filter((j) => {
+      const key = j.url;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    console.log(`✅ Boyne (axios fallback): ${unique.length} jobs`);
+    return unique.slice(0, 80);
+  } catch (e) {
+    console.error('Boyne axios fallback failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape all jobs from Vail, Alterra, and Boyne.
+ * Vail always runs (axios). Alterra and Boyne try Puppeteer first, then axios fallback so we get jobs even without Chrome.
  */
 export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   console.log('⛷️ Scraping ALL resort companies...\n');
-  
-  const [vailJobs, alterraJobs, boyneJobs] = await Promise.all([
-    scrapeAllVailCategories(),
-    scrapeAlterraJobs(),
-    scrapeBoyneJobs(),
-  ]);
+
+  const VailPromise = scrapeAllVailCategories();
+  const AlterraPromise = withTimeout(scrapeAlterraJobs(), 1000 * 90, [] as ScrapedJob[]);
+  const BoynePromise = withTimeout(scrapeBoyneJobs(), 1000 * 90, [] as ScrapedJob[]);
+
+  let [vailJobs, alterraJobs, boyneJobs] = await Promise.all([VailPromise, AlterraPromise, BoynePromise]);
+
+  if (alterraJobs.length === 0) {
+    console.log('🔄 Alterra Puppeteer returned 0, trying axios fallback...');
+    alterraJobs = await scrapeAlterraJobsAxios();
+  }
+  if (boyneJobs.length === 0) {
+    console.log('🔄 Boyne Puppeteer returned 0, trying axios fallback...');
+    boyneJobs = await scrapeBoyneJobsAxios();
+  }
 
   const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs];
   console.log(`\n🎉 Total jobs from all companies: ${allJobs.length}`);
   console.log(`   - Vail Resorts: ${vailJobs.length}`);
   console.log(`   - Alterra: ${alterraJobs.length}`);
   console.log(`   - Boyne: ${boyneJobs.length}`);
-  
+
   return allJobs;
 }
 
