@@ -367,7 +367,9 @@ export function JobMap({ jobs }: JobMapProps) {
       });
 
       // Fallback: handle map click so desktop clicks on markers still work if map captures the event
-      map.current.on("click", (e) => {
+      const mapInstance = map.current;
+      if (mapInstance) {
+        mapInstance.on("click", (e) => {
         const target = e.originalEvent?.target as HTMLElement | null;
         if (!target) return;
         const markerEl = target.closest?.("[data-marker-type]") as HTMLElement | null;
@@ -389,6 +391,7 @@ export function JobMap({ jobs }: JobMapProps) {
           }
         }
       });
+      }
     });
 
     return () => {
