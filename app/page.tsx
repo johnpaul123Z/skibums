@@ -123,6 +123,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-900">
       <Navigation />
+      <main id="main-content">
       <SnowHero 
         onFilterChange={setFilters}
         totalJobs={jobs.length}
@@ -130,7 +131,7 @@ export default function Home() {
       />
 
       {/* Featured Jobs Section */}
-      <section id="jobs" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-900 to-slate-800">
+      <section id="jobs" aria-label="Job listings" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-900 to-slate-800">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -242,7 +243,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 md:py-24 px-4 md:px-6 bg-slate-800">
+      <section aria-label="Statistics" className="py-12 md:py-24 px-4 md:px-6 bg-slate-800">
         <div className="container mx-auto max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {stats.map((stat, index) => (
@@ -271,7 +272,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-800 to-slate-900">
+      <section id="about" aria-label="About SkiJobs" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-800 to-slate-900">
         <div className="container mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -324,6 +325,7 @@ export default function Home() {
       </section>
 
       <Footer />
+      </main>
     </div>
   );
 }

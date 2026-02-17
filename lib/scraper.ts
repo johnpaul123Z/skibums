@@ -396,12 +396,14 @@ export async function scrapeAlterraJobs(): Promise<ScrapedJob[]> {
   }
 }
 
+const BOYNE_JOBS_URL = 'https://careers.boyneresorts.com/all/jobs';
+
 /**
- * Scrape Boyne Resorts jobs
+ * Scrape Boyne Resorts jobs from https://careers.boyneresorts.com/all/jobs
  * Uses Puppeteer since it's a JavaScript-rendered site (Angular)
  */
 export async function scrapeBoyneJobs(): Promise<ScrapedJob[]> {
-  console.log('⛷️ Scraping Boyne Resorts jobs...');
+  console.log('⛷️ Scraping Boyne Resorts jobs...', BOYNE_JOBS_URL);
   
   try {
     const browser = await puppeteer.launch({
@@ -412,48 +414,48 @@ export async function scrapeBoyneJobs(): Promise<ScrapedJob[]> {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
     
-    // Go to Boyne jobs page
-    await page.goto('https://careers.boyneresorts.com/all/jobs', {
+    await page.goto(BOYNE_JOBS_URL, {
       waitUntil: 'networkidle2',
       timeout: 30000,
     });
 
-    // Wait for job listings to load (Angular app)
-    await page.waitForSelector('.job-item, .job-listing, [class*="job"], .search-result-item', { 
+    await page.waitForSelector('a[href*="/job"], .job-item, .job-listing, [class*="job"], .search-result-item, table tbody tr', { 
       timeout: 20000 
     }).catch(() => console.log('Job selector not found, trying to extract anyway'));
 
-    // Give Angular time to render
     await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // Extract job data
-    const jobs = await page.evaluate(() => {
-      const jobElements = document.querySelectorAll('.job-item, .search-result-item, a[href*="/job/"], [data-job-id]');
+    const jobs = await page.evaluate((baseUrl: string) => {
       const scrapedJobs: any[] = [];
+      const seen = new Set<string>();
 
-      jobElements.forEach((el) => {
-        const link = el.querySelector('a') || el as HTMLAnchorElement;
-        const href = link.href || link.getAttribute('href');
-        
-        // Try multiple selectors for title
-        const titleEl = el.querySelector('.job-title, .jobtitle, h2, h3, [class*="title"]');
-        const title = titleEl?.textContent?.trim() || link.textContent?.trim() || '';
-        
-        // Try to find location
-        const locationEl = el.querySelector('.job-location, .location, [class*="location"]');
-        const location = locationEl?.textContent?.trim() || '';
-        
-        if (href && href.includes('/job/') && title && title.length > 3) {
-          scrapedJobs.push({
-            title,
-            location,
-            url: href.startsWith('http') ? href : `https://careers.boyneresorts.com${href}`,
-          });
+      const addJob = (href: string, title: string, location: string) => {
+        const url = href.startsWith('http') ? href : `${baseUrl.replace(/\/all\/jobs\/?$/, '')}${href.startsWith('/') ? href : '/' + href}`;
+        if (!url.includes('/job') || seen.has(url)) return;
+        seen.add(url);
+        if (title && title.length > 2) {
+          scrapedJobs.push({ title: title.trim(), location: location.trim(), url });
         }
+      };
+
+      document.querySelectorAll('a[href*="/job"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        const title = a.textContent?.trim() || (a.querySelector('.job-title, .jobtitle, h2, h3, [class*="title"]') as HTMLElement)?.textContent?.trim() || '';
+        const row = a.closest('tr, .job-item, .search-result-item, [class*="job"]');
+        const location = row ? (row.querySelector('.job-location, .location, [class*="location"]') as HTMLElement)?.textContent?.trim() || '' : '';
+        addJob(href, title, location);
+      });
+
+      document.querySelectorAll('tr a[href*="/job"], .job-item a, .search-result-item a').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        const row = a.closest('tr, .job-item, .search-result-item');
+        const title = (row?.querySelector('.job-title, .jobtitle, h2, h3, [class*="title"], a') as HTMLElement)?.textContent?.trim() || (a as HTMLElement).textContent?.trim() || '';
+        const location = (row?.querySelector('.job-location, .location, [class*="location"]') as HTMLElement)?.textContent?.trim() || '';
+        addJob(href, title, location);
       });
 
       return scrapedJobs;
-    });
+    }, BOYNE_JOBS_URL);
 
     await browser.close();
 
@@ -487,7 +489,7 @@ export async function scrapeBoyneJobs(): Promise<ScrapedJob[]> {
     });
 
     console.log(`✅ Found ${formattedJobs.length} jobs from Boyne Resorts`);
-    return formattedJobs.slice(0, 50); // Limit to first 50
+    return formattedJobs.slice(0, 150);
   } catch (error) {
     console.error('Error scraping Boyne:', error);
     return [];
@@ -551,17 +553,20 @@ async function scrapeAlterraJobsAxios(): Promise<ScrapedJob[]> {
  */
 async function scrapeBoyneJobsAxios(): Promise<ScrapedJob[]> {
   try {
-    const { data } = await axios.get('https://careers.boyneresorts.com/all/jobs', {
+    const { data } = await axios.get(BOYNE_JOBS_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
       timeout: 15000,
     });
     const $ = cheerio.load(data);
     const jobs: ScrapedJob[] = [];
-    $('a[href*="/job/"]').each((_, el) => {
+    const seen = new Set<string>();
+    $('a[href*="/job"]').each((_, el) => {
       const href = $(el).attr('href')?.trim();
       const title = $(el).text().trim() || $(el).find('.job-title, .jobtitle, [class*="title"]').text().trim();
       if (href && title && title.length > 2) {
-        const url = href.startsWith('http') ? href : `https://careers.boyneresorts.com${href}`;
+        const url = href.startsWith('http') ? href : `https://careers.boyneresorts.com${href.startsWith('/') ? href : '/' + href}`;
+        if (seen.has(url)) return;
+        seen.add(url);
         jobs.push({
           title,
           resort: 'Boyne Resort',
@@ -573,15 +578,8 @@ async function scrapeBoyneJobsAxios(): Promise<ScrapedJob[]> {
         });
       }
     });
-    const seen = new Set<string>();
-    const unique = jobs.filter((j) => {
-      const key = j.url;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    console.log(`✅ Boyne (axios fallback): ${unique.length} jobs`);
-    return unique.slice(0, 80);
+    console.log(`✅ Boyne (axios fallback): ${jobs.length} jobs`);
+    return jobs.slice(0, 150);
   } catch (e) {
     console.error('Boyne axios fallback failed:', e);
     return [];
