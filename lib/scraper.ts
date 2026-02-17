@@ -22,7 +22,7 @@ export interface ScrapedJob {
   shiftType: string;
   url: string;
   category: string;
-  company: 'Vail' | 'Alterra' | 'Boyne';
+  company: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr';
   description?: string; // Job description summary
 }
 
@@ -278,7 +278,7 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
       ) ||
       // Seasonal positions at major resorts often include housing
       (job.shiftType.toLowerCase().includes('seasonal') && 
-       (job.company === 'Vail' || job.company === 'Alterra') &&
+       (job.company === 'Vail' || job.company === 'Alterra' || job.company === 'Powdr') &&
        (title.includes('instructor') || title.includes('patrol') || title.includes('lift'))) ||
       // International positions usually include housing
       (title.includes('international') || title.includes('j-1') || title.includes('visa'));
@@ -286,7 +286,8 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
     // More accurate company-specific benefits
     const companyName = job.company === 'Vail' ? 'Vail Resorts' : 
                         job.company === 'Alterra' ? 'Alterra Mountain Company' : 
-                        job.company === 'Boyne' ? 'Boyne Resorts' : 'the resort';
+                        job.company === 'Boyne' ? 'Boyne Resorts' : 
+                        job.company === 'Powdr' ? 'Powdr' : 'the resort';
 
     return {
       id: `${job.company?.toLowerCase() || 'job'}-${index + 1}`,
@@ -311,6 +312,7 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
       benefits: [
         job.company === 'Vail' ? 'Free Epic Pass (ski 41+ resorts worldwide)' : 
         job.company === 'Alterra' ? 'Free Ikon Pass (ski 50+ resorts worldwide)' : 
+        job.company === 'Powdr' ? 'Season pass at Powdr resorts (Copper, Killington, Snowbird, etc.)' : 
         'Season pass benefits',
         '20-40% retail discounts',
         category.includes('ski') ? 'Free training & certification reimbursement' : 'On-the-job training',
@@ -323,11 +325,11 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
 
 /**
  * Scrape Alterra Mountain Company jobs (Ikon Pass resorts)
- * Uses Puppeteer since it's a client-side rendered site
+ * Uses Puppeteer since it's a client-side rendered site (ChangeState platform)
  */
 export async function scrapeAlterraJobs(): Promise<ScrapedJob[]> {
-  console.log('🏔️ Scraping Alterra Mountain Company jobs...');
-  
+  console.log('🏔️ Scraping Alterra Mountain Company jobs...', ALTERRA_JOBS_URL);
+
   try {
     const browser = await puppeteer.launch({
       headless: true,
@@ -335,39 +337,42 @@ export async function scrapeAlterraJobs(): Promise<ScrapedJob[]> {
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
-    
-    // Go to Alterra jobs page
-    await page.goto('https://jobs.alterramtnco.com/jobs?qu=&geo=&lo=&dp=', {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+    await page.goto(ALTERRA_JOBS_URL, {
+      waitUntil: 'networkidle0',
+      timeout: 45000,
     });
 
-    // Wait for jobs to load
-    await page.waitForSelector('.jobListItem, .job-item, [data-job-id], .search-result', { 
-      timeout: 15000 
-    }).catch(() => console.log('Job selector not found, trying to extract from page anyway'));
+    // Wait for job links or list container (site is JS-rendered)
+    await page.waitForSelector('a[href*="/job/"], [class*="job"] a, [class*="listing"] a, [class*="result"] a', { timeout: 20000 })
+      .catch(() => console.log('Alterra: job selector not found, will try full page extract'));
+    await new Promise((r) => setTimeout(r, 4000));
 
-    // Extract job data
-    const jobs = await page.evaluate(() => {
-      const jobElements = document.querySelectorAll('.jobListItem, .job-item, [data-job-id], .search-result, a[href*="/job/"]');
-      const scrapedJobs: any[] = [];
+    // Scroll to trigger lazy-loaded job list
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+    await new Promise((r) => setTimeout(r, 2000));
 
-      jobElements.forEach((el) => {
-        const link = el as HTMLAnchorElement;
-        const href = link.href || link.getAttribute('href');
-        const title = link.textContent?.trim() || '';
-        
-        if (href && href.includes('/job/') && title) {
-          scrapedJobs.push({
-            title,
-            url: href.startsWith('http') ? href : `https://jobs.alterramtnco.com${href}`,
-          });
-        }
+    const jobs = await page.evaluate((origin: string) => {
+      const scrapedJobs: { title: string; url: string }[] = [];
+      const seen = new Set<string>();
+
+      document.querySelectorAll('a[href*="/job/"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        const url = href.startsWith('http') ? href : `${origin}${href.startsWith('/') ? href : '/' + href}`;
+        if (!url.includes('/job/') || seen.has(url)) return;
+        const row = a.closest('li, tr, [role="row"], [class*="job"], [class*="result"], [class*="listing"]');
+        const title = (row?.querySelector('[class*="title"], a') as HTMLElement)?.textContent?.trim()
+          || (a as HTMLElement).textContent?.trim() || '';
+        if (!title || title.length < 2) return;
+        seen.add(url);
+        scrapedJobs.push({ title: title.trim(), url });
       });
 
       return scrapedJobs;
-    });
+    }, 'https://jobs.alterramtnco.com');
 
     await browser.close();
 
@@ -389,14 +394,18 @@ export async function scrapeAlterraJobs(): Promise<ScrapedJob[]> {
     });
 
     console.log(`✅ Found ${formattedJobs.length} jobs from Alterra`);
-    return formattedJobs.slice(0, 50); // Limit to first 50 for performance
+    return formattedJobs.slice(0, 80);
   } catch (error) {
     console.error('Error scraping Alterra:', error);
     return [];
   }
 }
 
+const ALTERRA_JOBS_URL = 'https://jobs.alterramtnco.com/jobs?qu=&geo=&lo=&dp=';
+
 const BOYNE_JOBS_URL = 'https://careers.boyneresorts.com/all/jobs';
+
+const POWDR_JOBS_URL = 'https://powdr.wd12.myworkdayjobs.com/POWDR_Careers?locations=861bc65ed43610015f9b8f72eceb0000&locations=861bc65ed43610015f9b32f525580000';
 
 /**
  * Scrape Boyne Resorts jobs from https://careers.boyneresorts.com/all/jobs
@@ -509,7 +518,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
  */
 async function scrapeAlterraJobsAxios(): Promise<ScrapedJob[]> {
   try {
-    const { data } = await axios.get('https://jobs.alterramtnco.com/jobs', {
+    const { data } = await axios.get(ALTERRA_JOBS_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
       timeout: 15000,
     });
@@ -587,8 +596,113 @@ async function scrapeBoyneJobsAxios(): Promise<ScrapedJob[]> {
 }
 
 /**
- * Scrape all jobs from Vail, Alterra, and Boyne.
- * Vail always runs (axios). Alterra and Boyne try Puppeteer first, then axios fallback so we get jobs even without Chrome.
+ * Scrape Powdr jobs (Workday) - Copper, Killington, Snowbird, etc.
+ * Uses Puppeteer; Workday career pages are JS-rendered.
+ */
+export async function scrapePowdrJobs(): Promise<ScrapedJob[]> {
+  console.log('🏂 Scraping Powdr jobs (Workday)...', POWDR_JOBS_URL);
+  try {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(POWDR_JOBS_URL, {
+      waitUntil: 'networkidle2',
+      timeout: 30000,
+    });
+    await page.waitForSelector('a[href*="/job/"], [data-automation-id="jobPosting"], li[class*="job"], .wd-List', { timeout: 20000 })
+      .catch(() => console.log('Powdr: job list selector not found, extracting anyway'));
+    await new Promise((r) => setTimeout(r, 3000));
+
+    const baseUrl = 'https://powdr.wd12.myworkdayjobs.com';
+    const jobs = await page.evaluate((origin: string) => {
+      const out: { title: string; location: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="/job/"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        if (!href.includes('/job/') || seen.has(href)) return;
+        seen.add(href);
+        const title = (a.textContent?.trim() || a.closest('li')?.querySelector('[data-automation-id="jobPosting"]')?.textContent?.trim() || a.closest('tr')?.querySelector('td')?.textContent?.trim() || '').trim();
+        const row = a.closest('li, tr, [role="listitem"]');
+        const location = (row?.querySelector('[data-automation-id="locations"], .location, [class*="location"]') as HTMLElement)?.textContent?.trim() || '';
+        if (title && title.length > 2) {
+          out.push({ title, location, url: href.startsWith('http') ? href : `${origin}${href.startsWith('/') ? href : '/' + href}` });
+        }
+      });
+      return out;
+    }, baseUrl);
+    await browser.close();
+
+    const powdrResorts = ['Copper', 'Killington', 'Snowbird', 'Boreal', 'Soda Springs', 'Mt. Bachelor', 'Lee Canyon', 'Woodward'];
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; location: string; url: string }) => {
+      let resort = 'Powdr Resort';
+      for (const r of powdrResorts) {
+        if ((j.location || j.title).toLowerCase().includes(r.toLowerCase().replace(' ', '')) || j.title.toLowerCase().includes(r.toLowerCase())) {
+          resort = r;
+          break;
+        }
+      }
+      return {
+        title: j.title,
+        resort,
+        location: j.location || 'Various Locations',
+        shiftType: 'Seasonal/Year-round',
+        url: j.url,
+        category: 'All Departments',
+        company: 'Powdr',
+      };
+    });
+    console.log(`✅ Found ${formatted.length} jobs from Powdr`);
+    return formatted.slice(0, 200);
+  } catch (error) {
+    console.error('Error scraping Powdr:', error);
+    return [];
+  }
+}
+
+/**
+ * Powdr fallback: fetch Workday HTML with axios and parse job links.
+ */
+async function scrapePowdrJobsAxios(): Promise<ScrapedJob[]> {
+  try {
+    const { data } = await axios.get(POWDR_JOBS_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      timeout: 15000,
+    });
+    const $ = cheerio.load(data);
+    const jobs: ScrapedJob[] = [];
+    const seen = new Set<string>();
+    $('a[href*="/job/"]').each((_, el) => {
+      const href = $(el).attr('href')?.trim();
+      const title = $(el).text().trim() || $(el).closest('li').find('[data-automation-id="jobPosting"]').text().trim();
+      if (href && title && title.length > 2) {
+        const url = href.startsWith('http') ? href : `https://powdr.wd12.myworkdayjobs.com${href.startsWith('/') ? href : '/' + href}`;
+        if (seen.has(url)) return;
+        seen.add(url);
+        jobs.push({
+          title,
+          resort: 'Powdr Resort',
+          location: 'Various Locations',
+          shiftType: 'Seasonal/Year-round',
+          url,
+          category: 'All Departments',
+          company: 'Powdr',
+        });
+      }
+    });
+    console.log(`✅ Powdr (axios fallback): ${jobs.length} jobs`);
+    return jobs.slice(0, 200);
+  } catch (e) {
+    console.error('Powdr axios fallback failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape all jobs from Vail, Alterra, Boyne, and Powdr.
+ * Vail always runs (axios). Alterra, Boyne, Powdr try Puppeteer first, then axios fallback so we get jobs even without Chrome.
  */
 export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   console.log('⛷️ Scraping ALL resort companies...\n');
@@ -596,8 +710,9 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   const VailPromise = scrapeAllVailCategories();
   const AlterraPromise = withTimeout(scrapeAlterraJobs(), 1000 * 90, [] as ScrapedJob[]);
   const BoynePromise = withTimeout(scrapeBoyneJobs(), 1000 * 90, [] as ScrapedJob[]);
+  const PowdrPromise = withTimeout(scrapePowdrJobs(), 1000 * 90, [] as ScrapedJob[]);
 
-  let [vailJobs, alterraJobs, boyneJobs] = await Promise.all([VailPromise, AlterraPromise, BoynePromise]);
+  let [vailJobs, alterraJobs, boyneJobs, powdrJobs] = await Promise.all([VailPromise, AlterraPromise, BoynePromise, PowdrPromise]);
 
   if (alterraJobs.length === 0) {
     console.log('🔄 Alterra Puppeteer returned 0, trying axios fallback...');
@@ -607,12 +722,17 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
     console.log('🔄 Boyne Puppeteer returned 0, trying axios fallback...');
     boyneJobs = await scrapeBoyneJobsAxios();
   }
+  if (powdrJobs.length === 0) {
+    console.log('🔄 Powdr Puppeteer returned 0, trying axios fallback...');
+    powdrJobs = await scrapePowdrJobsAxios();
+  }
 
-  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs];
+  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs, ...powdrJobs];
   console.log(`\n🎉 Total jobs from all companies: ${allJobs.length}`);
   console.log(`   - Vail Resorts: ${vailJobs.length}`);
   console.log(`   - Alterra: ${alterraJobs.length}`);
   console.log(`   - Boyne: ${boyneJobs.length}`);
+  console.log(`   - Powdr: ${powdrJobs.length}`);
 
   return allJobs;
 }

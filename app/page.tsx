@@ -114,7 +114,7 @@ export default function Home() {
     },
     {
       icon: MapIcon,
-      value: "3",
+      value: "4",
       label: "Major Companies",
       gradient: "from-purple-500 to-pink-500",
     },
@@ -147,7 +147,7 @@ export default function Home() {
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400">
               {jobs.length > 0 
-                ? `${jobs.length} positions from Vail + Alterra + Boyne` 
+                ? `${jobs.length} positions from Vail, Alterra, Boyne & Powdr` 
                 : "Loading positions..."}
             </p>
             {jobs.length > 0 && (
@@ -158,7 +158,7 @@ export default function Home() {
               >
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <Sparkles className="w-4 h-4" />
-                Live from Vail, Alterra & Boyne Resorts
+                Live from Vail, Alterra, Boyne & Powdr Resorts
               </motion.div>
             )}
           </motion.div>
@@ -166,7 +166,7 @@ export default function Home() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mb-4" />
-              <p className="text-gray-400">Loading live jobs from Vail + Alterra + Boyne...</p>
+              <p className="text-gray-400">Loading live jobs from Vail, Alterra, Boyne & Powdr...</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -315,7 +315,7 @@ export default function Home() {
 
                 <div className="pt-4 border-t border-white/10">
                   <p className="text-sm text-gray-400 italic">
-                    🎿 Jobs updated daily from Vail Resorts, Alterra Mountain Company, and Boyne Resorts career pages.
+                    🎿 Jobs updated daily from Vail Resorts, Alterra Mountain Company, Boyne Resorts, and Powdr career pages.
                   </p>
                 </div>
               </div>

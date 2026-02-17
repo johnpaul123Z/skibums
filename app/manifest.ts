@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "SkiJobs – Ski Resort Jobs",
     short_name: "SkiJobs",
-    description: "Find ski resort jobs at 47+ mountains. Vail, Alterra & Boyne Resorts.",
+    description: "Find ski resort jobs at 47+ mountains. Vail, Alterra, Boyne & Powdr Resorts.",
     start_url: "/",
     display: "standalone",
     background_color: "#0f172a",

@@ -28,7 +28,7 @@ export interface Job {
   description?: string;
   requirements?: string[];
   benefits?: string[];
-  company?: 'Vail' | 'Alterra';
+  company?: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr';
   housing?: boolean; // Does this job provide housing?
 }
 
@@ -194,7 +194,7 @@ export function JobCard3D({ job }: JobCard3DProps) {
             {job.company && (
               <div className="flex items-center text-gray-400 text-xs">
                 <Briefcase className="w-3 h-3 mr-2" />
-                {job.company === 'Vail' ? 'Epic Pass' : job.company === 'Alterra' ? 'Ikon Pass' : 'Boyne'}
+                {job.company === 'Vail' ? 'Epic Pass' : job.company === 'Alterra' ? 'Ikon Pass' : job.company === 'Powdr' ? 'Powdr' : 'Boyne'}
               </div>
             )}
           </div>

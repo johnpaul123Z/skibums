@@ -1,10 +1,11 @@
 /**
- * API Route to fetch scraped jobs from Vail, Alterra, and Boyne
+ * API Route to fetch scraped jobs from Vail, Alterra, Boyne, and Powdr
  * GET /api/jobs/scrape - Vail Ski School only
  * GET /api/jobs/scrape?category=all - All Vail categories
  * GET /api/jobs/scrape?category=alterra - Alterra only
  * GET /api/jobs/scrape?category=boyne - Boyne only
- * GET /api/jobs/scrape?category=everything - Vail + Alterra + Boyne (all jobs!)
+ * GET /api/jobs/scrape?category=powdr - Powdr only
+ * GET /api/jobs/scrape?category=everything - Vail + Alterra + Boyne + Powdr (all jobs!)
  *
  * Jobs are scraped at most once per day. Responses are cached in-memory (24 hours)
  * and sent with Cache-Control so browser/CDN can cache for 24 hours too.
@@ -16,6 +17,7 @@ import {
   scrapeVailResorts,
   scrapeAlterraJobs,
   scrapeBoyneJobs,
+  scrapePowdrJobs,
   scrapeAllResorts,
   VAIL_CATEGORIES,
   convertToJobFormat
@@ -66,13 +68,16 @@ export async function GET(request: Request) {
 
     if (category === 'everything') {
       scrapedJobs = await scrapeAllResorts();
-      source = 'Vail Resorts + Alterra + Boyne Resorts';
+      source = 'Vail Resorts + Alterra + Boyne Resorts + Powdr';
     } else if (category === 'alterra') {
       scrapedJobs = await scrapeAlterraJobs();
       source = 'Alterra Mountain Company';
     } else if (category === 'boyne') {
       scrapedJobs = await scrapeBoyneJobs();
       source = 'Boyne Resorts';
+    } else if (category === 'powdr') {
+      scrapedJobs = await scrapePowdrJobs();
+      source = 'Powdr';
     } else if (category === 'all') {
       scrapedJobs = await scrapeAllVailCategories();
       source = 'Vail Resorts (All Departments)';

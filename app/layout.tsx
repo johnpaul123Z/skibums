@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | SkiJobs",
   },
   description:
-    "Find ski resort jobs at 47+ mountains. Browse hundreds of seasonal and year-round positions from Vail Resorts (Epic Pass), Alterra (Ikon Pass), and Boyne Resorts. Ski instructor, lift ops, hospitality & more.",
+    "Find ski resort jobs at 47+ mountains. Browse hundreds of seasonal and year-round positions from Vail Resorts (Epic Pass), Alterra (Ikon Pass), Boyne Resorts, and Powdr. Ski instructor, lift ops, hospitality & more.",
   keywords: [
     "ski resort jobs",
     "ski instructor jobs",
@@ -45,16 +45,16 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "SkiJobs",
-    title: "SkiJobs – Find Ski Resort Jobs at Vail, Alterra & Boyne",
+    title: "SkiJobs – Find Ski Resort Jobs at Vail, Alterra, Boyne & Powdr",
     description:
-      "Browse ski resort jobs from 47+ mountains. Seasonal and year-round positions from Vail Resorts, Alterra Mountain Company, and Boyne Resorts.",
+      "Browse ski resort jobs from 47+ mountains. Seasonal and year-round positions from Vail Resorts, Alterra Mountain Company, Boyne Resorts, and Powdr.",
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "SkiJobs – Find ski resort jobs at 47+ mountains" }],
   },
   twitter: {
     card: "summary_large_image",
     images: ["/opengraph-image"],
-    title: "SkiJobs – Ski Resort Jobs | Vail, Alterra, Boyne",
-    description: "Find ski resort jobs at 47+ mountains. Browse positions from Vail, Alterra & Boyne Resorts.",
+    title: "SkiJobs – Ski Resort Jobs | Vail, Alterra, Boyne & Powdr",
+    description: "Find ski resort jobs at 47+ mountains. Browse positions from Vail, Alterra, Boyne & Powdr Resorts.",
   },
   robots: {
     index: true,
@@ -80,7 +80,7 @@ const jsonLd = {
       "@id": `${siteUrl}/#organization`,
       name: "SkiJobs",
       url: siteUrl,
-      description: "Ski resort job board aggregating careers from Vail Resorts, Alterra Mountain Company, and Boyne Resorts.",
+      description: "Ski resort job board aggregating careers from Vail Resorts, Alterra Mountain Company, Boyne Resorts, and Powdr.",
       logo: { "@type": "ImageObject", url: `${siteUrl}/icon` },
     },
     {
@@ -88,7 +88,7 @@ const jsonLd = {
       "@id": `${siteUrl}/#website`,
       url: siteUrl,
       name: "SkiJobs",
-      description: "Find ski resort jobs at 47+ mountains. Browse careers from Vail, Alterra, and Boyne Resorts.",
+      description: "Find ski resort jobs at 47+ mountains. Browse careers from Vail, Alterra, Boyne, and Powdr Resorts.",
       publisher: { "@id": `${siteUrl}/#organization` },
       inLanguage: "en-US",
       potentialAction: {
@@ -101,7 +101,7 @@ const jsonLd = {
       "@type": "JobPosting",
       "@id": `${siteUrl}/#jobboard`,
       title: "Ski Resort Jobs",
-      description: "Seasonal and year-round jobs at ski resorts across North America. Positions include ski instructors, lift operators, ski patrol, hospitality, food & beverage, and retail at Vail, Alterra, and Boyne Resorts.",
+      description: "Seasonal and year-round jobs at ski resorts across North America. Positions include ski instructors, lift operators, ski patrol, hospitality, food & beverage, and retail at Vail, Alterra, Boyne, and Powdr Resorts.",
       hiringOrganization: { "@id": `${siteUrl}/#organization` },
       jobLocation: {
         "@type": "Place",
