@@ -28,11 +28,15 @@ export default function Home() {
       try {
         setLoading(true);
         // Fetch from BOTH Vail and Alterra (category=everything)
-        const response = await fetch('/api/jobs/scrape?category=everything');
-        const data = await response.json();
-        
-        if (data.success && data.jobs.length > 0) {
+        let response = await fetch('/api/jobs');
+        let data = await response.json();
+        if (data.success && Array.isArray(data.jobs) && data.jobs.length === 0) {
+          response = await fetch('/api/jobs/scrape?category=everything');
+          data = await response.json();
+        }
+        if (data.success && Array.isArray(data.jobs)) {
           setJobs(data.jobs);
+          if (data.jobs.length === 0) setError('No jobs found at this time. Please check back later.');
         } else {
           setError('No jobs found at this time. Please check back later.');
         }
@@ -145,9 +149,12 @@ export default function Home() {
                 Opportunities
               </span>
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-400">
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
+              Find ski resort jobs at Vail, Alterra, Boyne & Powdr. Browse seasonal and year-round positions: ski instructor, lift operator, ski patrol, hospitality, and more.
+            </p>
+            <p className="text-base sm:text-lg text-gray-500 mt-2">
               {jobs.length > 0 
-                ? `${jobs.length} positions from Vail, Alterra, Boyne & Powdr` 
+                ? `${jobs.length} positions currently listed.` 
                 : "Loading positions..."}
             </p>
             {jobs.length > 0 && (
