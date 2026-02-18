@@ -50,7 +50,7 @@ export default async function JobsPage() {
           url: job.url || `${baseUrl}/#jobs`,
           hiringOrganization: {
             "@type": "Organization",
-            name: job.company === "Vail" ? "Vail Resorts" : job.company === "Alterra" ? "Alterra Mountain Company" : job.company === "Boyne" ? "Boyne Resorts" : job.company === "Powdr" ? "Powdr" : "Ski Resort",
+            name: job.company === "Vail" ? "Vail Resorts" : job.company === "Alterra" ? "Alterra Mountain Company" : job.company === "Boyne" ? "Boyne Resorts" : job.company === "Powdr" ? "Powdr" : job.company === "Other" ? (job.resort || "Ski Resort") : "Ski Resort",
           },
           jobLocation: {
             "@type": "Place",

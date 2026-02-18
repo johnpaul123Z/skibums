@@ -27,5 +27,5 @@ Jobs are stored in PostgreSQL so the site loads fast. Every morning the DB is cl
 ## Flow
 
 - **GET /api/jobs** – reads from DB (fast). Used by the homepage and `/jobs` page.
-- **GET/POST /api/jobs/refresh** – deletes all jobs, scrapes Vail + Alterra + Boyne + Powdr, inserts into DB.
+- **GET/POST /api/jobs/refresh** – deletes all jobs, scrapes all sources (Vail, Alterra, Boyne, Powdr, Mammoth Mountain, Jackson Hole/ADP, Sun Valley/UltiPro, Paycom), inserts into DB.
 - If the DB is empty, the frontend falls back to the scrape API.

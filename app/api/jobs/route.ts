@@ -2,12 +2,27 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * GET /api/jobs - Returns all jobs from the database (fast).
- * Used by the homepage and /jobs page. Data is refreshed daily by cron.
+ * GET /api/jobs - Returns jobs from the database.
+ * Optional ?q= search term: filters by title, resort, location, or description (case-insensitive).
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim();
+
+    const where = q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" as const } },
+            { resort: { contains: q, mode: "insensitive" as const } },
+            { location: { contains: q, mode: "insensitive" as const } },
+            { description: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined;
+
     const jobs = await prisma.job.findMany({
+      where,
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
 
@@ -25,7 +40,7 @@ export async function GET() {
       requirements: j.requirements,
       benefits: j.benefits,
       url: j.url ?? undefined,
-      company: j.company as "Vail" | "Alterra" | "Boyne" | "Powdr" | undefined,
+      company: j.company as "Vail" | "Alterra" | "Boyne" | "Powdr" | "Other" | undefined,
       housing: j.housing ?? undefined,
     }));
 

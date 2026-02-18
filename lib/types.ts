@@ -16,7 +16,7 @@ export interface Job {
   postedDate?: Date;
   applicationDeadline?: Date;
   url?: string;
-  company?: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr';
+  company?: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr' | 'Other';
   housing?: boolean; // Does this job provide housing?
 }
 

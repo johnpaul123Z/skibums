@@ -65,6 +65,7 @@ const RESORT_COORDS: { [key: string]: [number, number] } = {
   "Steamboat": [-106.8175, 40.4850],
   "Winter Park": [-105.7625, 39.8867],
   "Deer Valley": [-111.4783, 40.6369],
+  "Deer Valley Resort": [-111.4783, 40.6369],
   "Solitude": [-111.5914, 40.6197],
   "Crystal": [-121.4747, 46.9358],
   "Schweitzer": [-116.6228, 48.3678],
@@ -75,6 +76,10 @@ const RESORT_COORDS: { [key: string]: [number, number] } = {
   "Snowshoe": [-79.9944, 38.4097],
   "Aspen": [-106.8175, 39.1911],
   "Jackson": [-110.8285, 43.5875],
+  "Jackson Hole": [-110.8278, 43.5875],
+  "Jackson Hole Mountain Resort": [-110.8278, 43.5875],
+  "Mammoth Mountain": [-119.0326, 37.6308],
+  "Sun Valley Resort": [-114.3517, 43.6974],
   "CMH": [-117.5, 51.0],
   
   // Boyne Resorts

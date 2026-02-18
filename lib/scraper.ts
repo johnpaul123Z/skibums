@@ -22,7 +22,7 @@ export interface ScrapedJob {
   shiftType: string;
   url: string;
   category: string;
-  company: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr';
+  company: 'Vail' | 'Alterra' | 'Boyne' | 'Powdr' | 'Other';
   description?: string; // Job description summary
 }
 
@@ -287,7 +287,8 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
     const companyName = job.company === 'Vail' ? 'Vail Resorts' : 
                         job.company === 'Alterra' ? 'Alterra Mountain Company' : 
                         job.company === 'Boyne' ? 'Boyne Resorts' : 
-                        job.company === 'Powdr' ? 'Powdr' : 'the resort';
+                        job.company === 'Powdr' ? 'Powdr' : 
+                        job.company === 'Other' ? job.resort : 'the resort';
 
     return {
       id: `${job.company?.toLowerCase() || 'job'}-${index + 1}`,
@@ -313,6 +314,7 @@ export function convertToJobFormat(scrapedJobs: ScrapedJob[]): Job[] {
         job.company === 'Vail' ? 'Free Epic Pass (ski 41+ resorts worldwide)' : 
         job.company === 'Alterra' ? 'Free Ikon Pass (ski 50+ resorts worldwide)' : 
         job.company === 'Powdr' ? 'Season pass at Powdr resorts (Copper, Killington, Snowbird, etc.)' : 
+        job.company === 'Other' ? 'Resort benefits' : 
         'Season pass benefits',
         '20-40% retail discounts',
         category.includes('ski') ? 'Free training & certification reimbursement' : 'On-the-job training',
@@ -406,6 +408,215 @@ const ALTERRA_JOBS_URL = 'https://jobs.alterramtnco.com/jobs?qu=&geo=&lo=&dp=';
 const BOYNE_JOBS_URL = 'https://careers.boyneresorts.com/all/jobs';
 
 const POWDR_JOBS_URL = 'https://powdr.wd12.myworkdayjobs.com/POWDR_Careers?locations=861bc65ed43610015f9b8f72eceb0000&locations=861bc65ed43610015f9b32f525580000';
+
+const MAMMOTH_JOBS_URL = 'https://alterra.wd1.myworkdayjobs.com/MammothMountain';
+const DEER_VALLEY_JOBS_URL = 'https://alterra.wd1.myworkdayjobs.com/DeerValleyResort';
+const ADP_JHM_URL = 'https://myjobs.adp.com/jhmremploymentcenter/cx/job-listing';
+const SUN_VALLEY_JOBS_URL = 'https://recruiting2.ultipro.com/GRA1027GAMH/JobBoard/fea69ac9-edad-4702-8369-9285d60cc4f0/?q=&o=postedDateDesc';
+const PAYCOM_JOBS_URL = 'https://www.paycomonline.net/v4/ats/web.php/portal/90FB33A7DE87561260286F9271F860DB/career-page';
+
+/**
+ * Scrape Mammoth Mountain jobs (Alterra Workday)
+ */
+async function scrapeMammothJobs(): Promise<ScrapedJob[]> {
+  try {
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(MAMMOTH_JOBS_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.waitForSelector('a[href*="/job/"]', { timeout: 15000 }).catch(() => null);
+    await new Promise((r) => setTimeout(r, 3000));
+    const jobs = await page.evaluate((origin: string) => {
+      const out: { title: string; location: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="/job/"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        if (!href.includes('/job/') || seen.has(href)) return;
+        seen.add(href);
+        const title = (a as HTMLElement).textContent?.trim() || '';
+        const row = a.closest('li, tr, [role="listitem"]');
+        const location = (row?.querySelector('[class*="location"]') as HTMLElement)?.textContent?.trim() || '';
+        if (title && title.length > 2) out.push({ title, location, url: href.startsWith('http') ? href : `${origin}${href.startsWith('/') ? href : '/' + href}` });
+      });
+      return out;
+    }, 'https://alterra.wd1.myworkdayjobs.com');
+    await browser.close();
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; location: string; url: string }) => ({
+      title: j.title,
+      resort: 'Mammoth Mountain',
+      location: j.location || 'Mammoth Lakes, CA',
+      shiftType: 'Seasonal/Year-round',
+      url: j.url,
+      category: 'All Departments',
+      company: 'Alterra',
+    }));
+    console.log(`✅ Found ${formatted.length} jobs from Mammoth Mountain`);
+    return formatted.slice(0, 150);
+  } catch (e) {
+    console.error('Mammoth scrape failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape Deer Valley Resort jobs (Alterra Workday)
+ */
+async function scrapeDeerValleyJobs(): Promise<ScrapedJob[]> {
+  try {
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(DEER_VALLEY_JOBS_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.waitForSelector('a[href*="/job/"]', { timeout: 15000 }).catch(() => null);
+    await new Promise((r) => setTimeout(r, 3000));
+    const jobs = await page.evaluate((origin: string) => {
+      const out: { title: string; location: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="/job/"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || a.getAttribute('href') || '';
+        if (!href.includes('/job/') || seen.has(href)) return;
+        seen.add(href);
+        const title = (a as HTMLElement).textContent?.trim() || '';
+        const row = a.closest('li, tr, [role="listitem"]');
+        const location = (row?.querySelector('[class*="location"]') as HTMLElement)?.textContent?.trim() || '';
+        if (title && title.length > 2) out.push({ title, location, url: href.startsWith('http') ? href : `${origin}${href.startsWith('/') ? href : '/' + href}` });
+      });
+      return out;
+    }, 'https://alterra.wd1.myworkdayjobs.com');
+    await browser.close();
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; location: string; url: string }) => ({
+      title: j.title,
+      resort: 'Deer Valley Resort',
+      location: j.location || 'Park City, UT',
+      shiftType: 'Seasonal/Year-round',
+      url: j.url,
+      category: 'All Departments',
+      company: 'Alterra',
+    }));
+    console.log(`✅ Found ${formatted.length} jobs from Deer Valley Resort`);
+    return formatted.slice(0, 150);
+  } catch (e) {
+    console.error('Deer Valley scrape failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape ADP JHM (Jackson Hole Mountain Resort) job listing
+ */
+async function scrapeADPJHMJobs(): Promise<ScrapedJob[]> {
+  try {
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(ADP_JHM_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await new Promise((r) => setTimeout(r, 4000));
+    const jobs = await page.evaluate(() => {
+      const out: { title: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="/job/"], a[href*="job-listing"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || '';
+        if (!href || seen.has(href)) return;
+        const title = (a as HTMLElement).textContent?.trim() || '';
+        if (title && title.length > 3 && title.length < 150) { seen.add(href); out.push({ title, url: href }); }
+      });
+      return out;
+    });
+    await browser.close();
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; url: string }) => ({
+      title: j.title,
+      resort: 'Jackson Hole Mountain Resort',
+      location: 'Teton Village, WY',
+      shiftType: 'Seasonal/Year-round',
+      url: j.url,
+      category: 'All Departments',
+      company: 'Other',
+    }));
+    console.log(`✅ Found ${formatted.length} jobs from Jackson Hole (ADP)`);
+    return formatted.slice(0, 150);
+  } catch (e) {
+    console.error('ADP JHM scrape failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape Sun Valley Resort jobs (UltiPro)
+ */
+async function scrapeSunValleyJobs(): Promise<ScrapedJob[]> {
+  try {
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(SUN_VALLEY_JOBS_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await new Promise((r) => setTimeout(r, 4000));
+    const jobs = await page.evaluate(() => {
+      const out: { title: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="JobBoard"], a[href*="job"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || '';
+        if (!href || seen.has(href) || !href.includes('JobBoard')) return;
+        const title = (a as HTMLElement).textContent?.trim() || '';
+        if (title && title.length > 3 && title.length < 150) { seen.add(href); out.push({ title, url: href }); }
+      });
+      return out;
+    });
+    await browser.close();
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; url: string }) => ({
+      title: j.title,
+      resort: 'Sun Valley Resort',
+      location: 'Sun Valley, ID',
+      shiftType: 'Seasonal/Year-round',
+      url: j.url,
+      category: 'All Departments',
+      company: 'Other',
+    }));
+    console.log(`✅ Found ${formatted.length} jobs from Sun Valley`);
+    return formatted.slice(0, 150);
+  } catch (e) {
+    console.error('Sun Valley scrape failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape Paycom career page (resort TBD from page)
+ */
+async function scrapePaycomJobs(): Promise<ScrapedJob[]> {
+  try {
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+    await page.goto(PAYCOM_JOBS_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await new Promise((r) => setTimeout(r, 4000));
+    const jobs = await page.evaluate(() => {
+      const out: { title: string; url: string }[] = [];
+      const seen = new Set<string>();
+      document.querySelectorAll('a[href*="career"], a[href*="job"]').forEach((a) => {
+        const href = (a as HTMLAnchorElement).href || '';
+        if (!href || seen.has(href)) return;
+        const title = (a as HTMLElement).textContent?.trim() || '';
+        if (title && title.length > 3 && title.length < 150) { seen.add(href); out.push({ title, url: href }); }
+      });
+      return out;
+    });
+    await browser.close();
+    const formatted: ScrapedJob[] = jobs.map((j: { title: string; url: string }) => ({
+      title: j.title,
+      resort: 'Resort',
+      location: 'Various',
+      shiftType: 'Seasonal/Year-round',
+      url: j.url,
+      category: 'All Departments',
+      company: 'Other',
+    }));
+    console.log(`✅ Found ${formatted.length} jobs from Paycom portal`);
+    return formatted.slice(0, 100);
+  } catch (e) {
+    console.error('Paycom scrape failed:', e);
+    return [];
+  }
+}
 
 /**
  * Scrape Boyne Resorts jobs from https://careers.boyneresorts.com/all/jobs
@@ -701,8 +912,8 @@ async function scrapePowdrJobsAxios(): Promise<ScrapedJob[]> {
 }
 
 /**
- * Scrape all jobs from Vail, Alterra, Boyne, and Powdr.
- * Vail always runs (axios). Alterra, Boyne, Powdr try Puppeteer first, then axios fallback so we get jobs even without Chrome.
+ * Scrape all jobs from Vail, Alterra, Boyne, Powdr, Mammoth, Jackson Hole (ADP), Sun Valley (UltiPro), and Paycom.
+ * All new sources are included in the 2 AM refresh and DB.
  */
 export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   console.log('⛷️ Scraping ALL resort companies...\n');
@@ -711,8 +922,15 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   const AlterraPromise = withTimeout(scrapeAlterraJobs(), 1000 * 90, [] as ScrapedJob[]);
   const BoynePromise = withTimeout(scrapeBoyneJobs(), 1000 * 90, [] as ScrapedJob[]);
   const PowdrPromise = withTimeout(scrapePowdrJobs(), 1000 * 90, [] as ScrapedJob[]);
+  const MammothPromise = withTimeout(scrapeMammothJobs(), 1000 * 60, [] as ScrapedJob[]);
+  const DeerValleyPromise = withTimeout(scrapeDeerValleyJobs(), 1000 * 60, [] as ScrapedJob[]);
+  const JHMPromise = withTimeout(scrapeADPJHMJobs(), 1000 * 60, [] as ScrapedJob[]);
+  const SunValleyPromise = withTimeout(scrapeSunValleyJobs(), 1000 * 60, [] as ScrapedJob[]);
+  const PaycomPromise = withTimeout(scrapePaycomJobs(), 1000 * 60, [] as ScrapedJob[]);
 
-  let [vailJobs, alterraJobs, boyneJobs, powdrJobs] = await Promise.all([VailPromise, AlterraPromise, BoynePromise, PowdrPromise]);
+  let [vailJobs, alterraJobs, boyneJobs, powdrJobs, mammothJobs, deerValleyJobs, jhmJobs, sunValleyJobs, paycomJobs] = await Promise.all([
+    VailPromise, AlterraPromise, BoynePromise, PowdrPromise, MammothPromise, DeerValleyPromise, JHMPromise, SunValleyPromise, PaycomPromise,
+  ]);
 
   if (alterraJobs.length === 0) {
     console.log('🔄 Alterra Puppeteer returned 0, trying axios fallback...');
@@ -727,12 +945,17 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
     powdrJobs = await scrapePowdrJobsAxios();
   }
 
-  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs, ...powdrJobs];
+  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs, ...powdrJobs, ...mammothJobs, ...deerValleyJobs, ...jhmJobs, ...sunValleyJobs, ...paycomJobs];
   console.log(`\n🎉 Total jobs from all companies: ${allJobs.length}`);
   console.log(`   - Vail Resorts: ${vailJobs.length}`);
   console.log(`   - Alterra: ${alterraJobs.length}`);
   console.log(`   - Boyne: ${boyneJobs.length}`);
   console.log(`   - Powdr: ${powdrJobs.length}`);
+  console.log(`   - Mammoth Mountain: ${mammothJobs.length}`);
+  console.log(`   - Deer Valley Resort: ${deerValleyJobs.length}`);
+  console.log(`   - Jackson Hole (ADP): ${jhmJobs.length}`);
+  console.log(`   - Sun Valley: ${sunValleyJobs.length}`);
+  console.log(`   - Paycom: ${paycomJobs.length}`);
 
   return allJobs;
 }
