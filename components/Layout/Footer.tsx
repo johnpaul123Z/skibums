@@ -1,14 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mountain, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { Mountain, Mail, Instagram } from "lucide-react";
 
 export function Footer() {
   const socialLinks = [
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
-    { icon: Mail, href: "#", label: "Email" },
+    { icon: Instagram, href: "https://instagram.com/skijobss", label: "Instagram" },
+    { icon: Mail, href: "mailto:customsites21@gmail.com", label: "Email" },
   ];
 
   const footerLinks = {

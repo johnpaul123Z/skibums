@@ -59,6 +59,7 @@ const RESORT_COORDS: { [key: string]: [number, number] } = {
   // Alterra Resorts (Ikon Pass)
   "Palisades Tahoe": [-120.2356, 39.1969],
   "Mammoth": [-119.0326, 37.6308],
+  "Big Bear Mountain Resort": [-116.9111, 34.2311],
   "June": [-119.0833, 37.7667],
   "Big Bear": [-116.9111, 34.2311],
   "Snow Valley": [-117.0447, 34.2153],

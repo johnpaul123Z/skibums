@@ -12,16 +12,38 @@ interface AdvancedSearchProps {
 
 export interface FilterState {
   searchQuery: string;
-  location: string;
+  state: string;
+  resorts: string[];
   housing: boolean | null; // null = all, true = yes, false = no
   minSalary: number;
   maxSalary: number;
 }
 
+const STATE_RESORTS: Record<string, string[]> = {
+  Colorado: ["Vail", "Breckenridge", "Beaver Creek", "Keystone", "Crested Butte", "Steamboat", "Winter Park", "Copper"],
+  California: ["Heavenly", "Northstar", "Kirkwood", "Palisades Tahoe", "Mammoth", "Mammoth Mountain", "Big Bear", "Big Bear Mountain Resort", "Snow Valley"],
+  Utah: ["Park City", "Deer Valley", "Deer Valley Resort", "Solitude", "Snowbird", "Brighton"],
+  Montana: ["Big Sky"],
+  Vermont: ["Stowe", "Okemo", "Mount Snow", "Stratton", "Sugarbush"],
+  Washington: ["Stevens Pass", "Crystal Mountain", "Summit at Snoqualmie"],
+  Idaho: ["Schweitzer", "Sun Valley Resort", "Sun Valley"],
+  Wyoming: ["Jackson", "Jackson Hole", "Jackson Hole Mountain Resort"],
+  Maine: ["Sugarloaf", "Sunday River"],
+  NewHampshire: ["Loon Mountain", "Attitash", "Wildcat"],
+  NewYork: ["Hunter"],
+  Pennsylvania: ["Seven Springs", "Jack Frost"],
+  WestVirginia: ["Snowshoe"],
+  Michigan: ["Boyne Mountain"],
+  Canada: ["Whistler", "Tremblant", "Blue Mountain", "Cypress Mountain"],
+};
+
+const ALL_RESORTS = Array.from(new Set(Object.values(STATE_RESORTS).flat())).sort();
+
 export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: AdvancedSearchProps) {
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: "",
-    location: "",
+    state: "",
+    resorts: [],
     housing: null,
     minSalary: 0,
     maxSalary: 100000,
@@ -38,7 +60,8 @@ export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: Adv
   const clearFilters = () => {
     const clearedFilters: FilterState = {
       searchQuery: "",
-      location: "",
+      state: "",
+      resorts: [],
       housing: null,
       minSalary: 0,
       maxSalary: 100000,
@@ -49,18 +72,32 @@ export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: Adv
 
   const hasActiveFilters = 
     filters.searchQuery || 
-    filters.location || 
+    filters.state || 
+    filters.resorts.length > 0 ||
     filters.housing !== null ||
     filters.minSalary > 0 ||
     filters.maxSalary < 100000;
 
   const activeFilterCount = [
     filters.searchQuery,
-    filters.location,
+    filters.state,
+    filters.resorts.length > 0,
     filters.housing !== null,
     filters.minSalary > 0,
     filters.maxSalary < 100000,
   ].filter(Boolean).length;
+
+  const visibleResorts = filters.state && STATE_RESORTS[filters.state]
+    ? STATE_RESORTS[filters.state]
+    : ALL_RESORTS;
+
+  const toggleResort = (resort: string) => {
+    const exists = filters.resorts.includes(resort);
+    const nextResorts = exists
+      ? filters.resorts.filter((r) => r !== resort)
+      : [...filters.resorts, resort];
+    updateFilter("resorts", nextResorts);
+  };
 
   return (
     <motion.div
@@ -136,45 +173,40 @@ export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: Adv
           >
             <div className="pt-6 mt-6 border-t border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Location Filter */}
+                {/* State Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-cyan-400" />
-                    Location / Resort
+                    State
                   </label>
                   <select
-                    value={filters.location}
-                    onChange={(e) => updateFilter("location", e.target.value)}
+                    value={filters.state}
+                    onChange={(e) => {
+                      const nextState = e.target.value;
+                      const allowed = nextState && STATE_RESORTS[nextState] ? STATE_RESORTS[nextState] : ALL_RESORTS;
+                      const prunedResorts = filters.resorts.filter((r) => allowed.includes(r));
+                      const nextFilters = { ...filters, state: nextState, resorts: prunedResorts };
+                      setFilters(nextFilters);
+                      onFilterChange(nextFilters);
+                    }}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all appearance-none cursor-pointer"
                   >
-                    <option value="" className="bg-slate-800">All Locations</option>
-                    <optgroup label="Colorado" className="bg-slate-800">
-                      <option value="Vail" className="bg-slate-800">Vail</option>
-                      <option value="Breckenridge" className="bg-slate-800">Breckenridge</option>
-                      <option value="Beaver Creek" className="bg-slate-800">Beaver Creek</option>
-                      <option value="Keystone" className="bg-slate-800">Keystone</option>
-                      <option value="Steamboat" className="bg-slate-800">Steamboat</option>
-                      <option value="Winter Park" className="bg-slate-800">Winter Park</option>
-                    </optgroup>
-                    <optgroup label="California" className="bg-slate-800">
-                      <option value="Heavenly" className="bg-slate-800">Heavenly</option>
-                      <option value="Mammoth" className="bg-slate-800">Mammoth</option>
-                      <option value="Palisades" className="bg-slate-800">Palisades Tahoe</option>
-                    </optgroup>
-                    <optgroup label="Utah" className="bg-slate-800">
-                      <option value="Park City" className="bg-slate-800">Park City</option>
-                      <option value="Deer Valley" className="bg-slate-800">Deer Valley</option>
-                      <option value="Brighton" className="bg-slate-800">Brighton</option>
-                    </optgroup>
-                    <optgroup label="Montana" className="bg-slate-800">
-                      <option value="Big Sky" className="bg-slate-800">Big Sky</option>
-                    </optgroup>
-                    <optgroup label="Vermont" className="bg-slate-800">
-                      <option value="Stowe" className="bg-slate-800">Stowe</option>
-                      <option value="Okemo" className="bg-slate-800">Okemo</option>
-                      <option value="Stratton" className="bg-slate-800">Stratton</option>
-                      <option value="Sugarbush" className="bg-slate-800">Sugarbush</option>
-                    </optgroup>
+                    <option value="" className="bg-slate-800">All States</option>
+                    <option value="Colorado" className="bg-slate-800">Colorado</option>
+                    <option value="California" className="bg-slate-800">California</option>
+                    <option value="Utah" className="bg-slate-800">Utah</option>
+                    <option value="Montana" className="bg-slate-800">Montana</option>
+                    <option value="Vermont" className="bg-slate-800">Vermont</option>
+                    <option value="Washington" className="bg-slate-800">Washington</option>
+                    <option value="Idaho" className="bg-slate-800">Idaho</option>
+                    <option value="Wyoming" className="bg-slate-800">Wyoming</option>
+                    <option value="Maine" className="bg-slate-800">Maine</option>
+                    <option value="NewHampshire" className="bg-slate-800">New Hampshire</option>
+                    <option value="NewYork" className="bg-slate-800">New York</option>
+                    <option value="Pennsylvania" className="bg-slate-800">Pennsylvania</option>
+                    <option value="WestVirginia" className="bg-slate-800">West Virginia</option>
+                    <option value="Michigan" className="bg-slate-800">Michigan</option>
+                    <option value="Canada" className="bg-slate-800">Canada</option>
                   </select>
                 </div>
 
@@ -240,6 +272,35 @@ export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: Adv
                 </div>
               </div>
 
+              {/* Resort Multi-Select */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-400" />
+                  Resorts (select multiple)
+                </label>
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {visibleResorts.map((resort) => {
+                    const checked = filters.resorts.includes(resort);
+                    return (
+                      <label
+                        key={resort}
+                        className={`text-sm px-3 py-2 rounded-lg cursor-pointer transition ${
+                          checked ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/40" : "bg-white/5 text-gray-300 border border-transparent hover:bg-white/10"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={checked}
+                          onChange={() => toggleResort(resort)}
+                        />
+                        {resort}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Active Filters Display */}
               {hasActiveFilters && (
                 <motion.div
@@ -259,13 +320,23 @@ export function AdvancedSearch({ onFilterChange, totalJobs, filteredCount }: Adv
                         />
                       </span>
                     )}
-                    {filters.location && (
+                    {filters.state && (
                       <span className="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-full text-sm flex items-center gap-2">
                         <MapPin className="w-3 h-3" />
-                        {filters.location}
+                        State: {filters.state === "NewHampshire" ? "New Hampshire" : filters.state === "NewYork" ? "New York" : filters.state === "WestVirginia" ? "West Virginia" : filters.state}
                         <X
                           className="w-3 h-3 cursor-pointer hover:text-blue-200"
-                          onClick={() => updateFilter("location", "")}
+                          onClick={() => updateFilter("state", "")}
+                        />
+                      </span>
+                    )}
+                    {filters.resorts.length > 0 && (
+                      <span className="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 rounded-full text-sm flex items-center gap-2">
+                        <MapPin className="w-3 h-3" />
+                        Resorts: {filters.resorts.length}
+                        <X
+                          className="w-3 h-3 cursor-pointer hover:text-indigo-100"
+                          onClick={() => updateFilter("resorts", [])}
                         />
                       </span>
                     )}

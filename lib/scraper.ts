@@ -411,6 +411,7 @@ const POWDR_JOBS_URL = 'https://powdr.wd12.myworkdayjobs.com/POWDR_Careers?locat
 
 const MAMMOTH_JOBS_URL = 'https://alterra.wd1.myworkdayjobs.com/MammothMountain';
 const DEER_VALLEY_JOBS_URL = 'https://alterra.wd1.myworkdayjobs.com/DeerValleyResort';
+const BIG_BEAR_EMPLOYMENT_URL = 'https://www.bigbearmountainresort.com/employment';
 const ADP_JHM_URL = 'https://myjobs.adp.com/jhmremploymentcenter/cx/job-listing';
 const SUN_VALLEY_JOBS_URL = 'https://recruiting2.ultipro.com/GRA1027GAMH/JobBoard/fea69ac9-edad-4702-8369-9285d60cc4f0/?q=&o=postedDateDesc';
 const PAYCOM_JOBS_URL = 'https://www.paycomonline.net/v4/ats/web.php/portal/90FB33A7DE87561260286F9271F860DB/career-page';
@@ -497,6 +498,68 @@ async function scrapeDeerValleyJobs(): Promise<ScrapedJob[]> {
     return formatted.slice(0, 150);
   } catch (e) {
     console.error('Deer Valley scrape failed:', e);
+    return [];
+  }
+}
+
+/**
+ * Scrape Big Bear Mountain Resort employment page (Alterra).
+ * This page is mostly informational, so we capture application/career links and
+ * always include at least one canonical apply entry.
+ */
+async function scrapeBigBearJobs(): Promise<ScrapedJob[]> {
+  try {
+    const { data } = await axios.get(BIG_BEAR_EMPLOYMENT_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+      timeout: 20000,
+    });
+    const $ = cheerio.load(data);
+    const jobs: ScrapedJob[] = [];
+    const seen = new Set<string>();
+
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href')?.trim();
+      const text = $(el).text().trim();
+      if (!href) return;
+      const url = href.startsWith('http') ? href : `https://www.bigbearmountainresort.com${href.startsWith('/') ? href : '/' + href}`;
+      const lower = `${url} ${text}`.toLowerCase();
+      if (seen.has(url)) return;
+      if (
+        lower.includes('apply') ||
+        lower.includes('employment') ||
+        lower.includes('career') ||
+        lower.includes('job')
+      ) {
+        seen.add(url);
+        jobs.push({
+          title: text && text.length > 2 ? text : 'Apply to Work at Big Bear Mountain Resort',
+          resort: 'Big Bear Mountain Resort',
+          location: 'Big Bear Lake, CA',
+          shiftType: 'Seasonal/Year-round',
+          url,
+          category: 'All Departments',
+          company: 'Alterra',
+        });
+      }
+    });
+
+    // Ensure at least one actionable entry even when page only has informational copy
+    if (!jobs.length) {
+      jobs.push({
+        title: 'Apply to Work at Big Bear Mountain Resort',
+        resort: 'Big Bear Mountain Resort',
+        location: 'Big Bear Lake, CA',
+        shiftType: 'Seasonal/Year-round',
+        url: BIG_BEAR_EMPLOYMENT_URL,
+        category: 'All Departments',
+        company: 'Alterra',
+      });
+    }
+
+    console.log(`✅ Found ${jobs.length} Big Bear employment entries`);
+    return jobs.slice(0, 40);
+  } catch (e) {
+    console.error('Big Bear scrape failed:', e);
     return [];
   }
 }
@@ -924,12 +987,13 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   const PowdrPromise = withTimeout(scrapePowdrJobs(), 1000 * 90, [] as ScrapedJob[]);
   const MammothPromise = withTimeout(scrapeMammothJobs(), 1000 * 60, [] as ScrapedJob[]);
   const DeerValleyPromise = withTimeout(scrapeDeerValleyJobs(), 1000 * 60, [] as ScrapedJob[]);
+  const BigBearPromise = withTimeout(scrapeBigBearJobs(), 1000 * 45, [] as ScrapedJob[]);
   const JHMPromise = withTimeout(scrapeADPJHMJobs(), 1000 * 60, [] as ScrapedJob[]);
   const SunValleyPromise = withTimeout(scrapeSunValleyJobs(), 1000 * 60, [] as ScrapedJob[]);
   const PaycomPromise = withTimeout(scrapePaycomJobs(), 1000 * 60, [] as ScrapedJob[]);
 
-  let [vailJobs, alterraJobs, boyneJobs, powdrJobs, mammothJobs, deerValleyJobs, jhmJobs, sunValleyJobs, paycomJobs] = await Promise.all([
-    VailPromise, AlterraPromise, BoynePromise, PowdrPromise, MammothPromise, DeerValleyPromise, JHMPromise, SunValleyPromise, PaycomPromise,
+  let [vailJobs, alterraJobs, boyneJobs, powdrJobs, mammothJobs, deerValleyJobs, bigBearJobs, jhmJobs, sunValleyJobs, paycomJobs] = await Promise.all([
+    VailPromise, AlterraPromise, BoynePromise, PowdrPromise, MammothPromise, DeerValleyPromise, BigBearPromise, JHMPromise, SunValleyPromise, PaycomPromise,
   ]);
 
   if (alterraJobs.length === 0) {
@@ -945,7 +1009,7 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
     powdrJobs = await scrapePowdrJobsAxios();
   }
 
-  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs, ...powdrJobs, ...mammothJobs, ...deerValleyJobs, ...jhmJobs, ...sunValleyJobs, ...paycomJobs];
+  const allJobs = [...vailJobs, ...alterraJobs, ...boyneJobs, ...powdrJobs, ...mammothJobs, ...deerValleyJobs, ...bigBearJobs, ...jhmJobs, ...sunValleyJobs, ...paycomJobs];
   console.log(`\n🎉 Total jobs from all companies: ${allJobs.length}`);
   console.log(`   - Vail Resorts: ${vailJobs.length}`);
   console.log(`   - Alterra: ${alterraJobs.length}`);
@@ -953,6 +1017,7 @@ export async function scrapeAllResorts(): Promise<ScrapedJob[]> {
   console.log(`   - Powdr: ${powdrJobs.length}`);
   console.log(`   - Mammoth Mountain: ${mammothJobs.length}`);
   console.log(`   - Deer Valley Resort: ${deerValleyJobs.length}`);
+  console.log(`   - Big Bear Mountain Resort: ${bigBearJobs.length}`);
   console.log(`   - Jackson Hole (ADP): ${jhmJobs.length}`);
   console.log(`   - Sun Valley: ${sunValleyJobs.length}`);
   console.log(`   - Paycom: ${paycomJobs.length}`);

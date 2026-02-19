@@ -19,7 +19,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: "",
-    location: "",
+    state: "",
+    resorts: [],
     housing: null,
     minSalary: 0,
     maxSalary: 100000,
@@ -62,14 +63,40 @@ export default function Home() {
 
   // Filter jobs based on other criteria (location, housing, salary) — search is done by DB
   const filteredJobs = useMemo(() => {
+    const stateAliases: Record<string, string[]> = {
+      Colorado: ["colorado", "co"],
+      California: ["california", "ca"],
+      Utah: ["utah", "ut"],
+      Montana: ["montana", "mt"],
+      Vermont: ["vermont", "vt"],
+      Washington: ["washington", "wa"],
+      Idaho: ["idaho", "id"],
+      Wyoming: ["wyoming", "wy"],
+      Maine: ["maine", "me"],
+      NewHampshire: ["new hampshire", "nh"],
+      NewYork: ["new york", "ny"],
+      Pennsylvania: ["pennsylvania", "pa"],
+      WestVirginia: ["west virginia", "wv"],
+      Michigan: ["michigan", "mi"],
+      Canada: ["canada", "bc", "quebec"],
+    };
+
     return jobs.filter((job) => {
-      // Location filter
-      if (filters.location) {
-        const locationMatch = 
-          job.resort.toLowerCase().includes(filters.location.toLowerCase()) ||
-          job.location.toLowerCase().includes(filters.location.toLowerCase());
-        
-        if (!locationMatch) return false;
+      // State filter
+      if (filters.state) {
+        const aliases = stateAliases[filters.state] || [filters.state.toLowerCase()];
+        const haystack = `${job.location} ${job.resort}`.toLowerCase();
+        const stateMatch = aliases.some((alias) => haystack.includes(alias));
+        if (!stateMatch) return false;
+      }
+
+      // Multi-resort filter
+      if (filters.resorts.length > 0) {
+        const resortMatch = filters.resorts.some((selected) =>
+          job.resort.toLowerCase().includes(selected.toLowerCase()) ||
+          selected.toLowerCase().includes(job.resort.toLowerCase())
+        );
+        if (!resortMatch) return false;
       }
 
       // Housing filter
@@ -275,6 +302,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Resorts Section */}
+      <section id="resorts" aria-label="Resort partners and destinations" className="py-12 md:py-20 px-4 md:px-6 bg-slate-800 border-t border-white/10">
+        <div className="container mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Resorts</h2>
+            <p className="text-gray-400">Live job sources across Vail, Alterra, Boyne, Powdr and partner resort pages.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <GlassCard>
+              <h3 className="text-white font-semibold mb-3">Major Operators</h3>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>Vail Resorts (Epic Pass)</li>
+                <li>Alterra Mountain Company (Ikon Pass)</li>
+                <li>Boyne Resorts</li>
+                <li>Powdr</li>
+              </ul>
+            </GlassCard>
+            <GlassCard>
+              <h3 className="text-white font-semibold mb-3">Included Destinations</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Examples include Vail, Breckenridge, Mammoth Mountain, Deer Valley Resort, Big Bear Mountain Resort,
+                Jackson Hole Mountain Resort, Sun Valley Resort, Big Sky, and more.
+              </p>
+            </GlassCard>
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
       <section id="about" aria-label="About SkiJobs" className="py-12 md:py-24 px-4 md:px-6 bg-gradient-to-b from-slate-800 to-slate-900">
         <div className="container mx-auto max-w-4xl">
@@ -324,6 +385,31 @@ export default function Home() {
                 </div>
               </div>
             </GlassCard>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" aria-label="Contact SkiJobs" className="py-12 md:py-20 px-4 md:px-6 bg-slate-900 border-t border-white/10">
+        <div className="container mx-auto max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Contact
+            </h2>
+            <p className="text-gray-400 mb-6">
+              Questions, partnerships, or listing corrections? Reach us directly.
+            </p>
+            <a
+              href="mailto:customsites21@gmail.com"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold transition-colors"
+            >
+              customsites21@gmail.com
+            </a>
           </motion.div>
         </div>
       </section>
