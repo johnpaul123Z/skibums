@@ -1,5 +1,5 @@
 ⛷️ SkiJobs – Alpine Modern Job Board
-https://skijobs.net/
+
 A modern ski resort job board built with Next.js, TypeScript, Tailwind CSS, and Framer Motion. Designed with a premium mountain-inspired aesthetic and smooth, interactive animations.
 
 🎿 Design
@@ -33,25 +33,9 @@ Framer Motion
 Lucide Icons
 
 🚀 Getting Started
-npm install
-npm run dev
 
-Open http://localhost:3000.
 
-🎨 Customization
+Open https://skijobs.net/.
 
-Edit jobs in app/page.tsx
 
-Update brand colors in app/globals.css
 
-Adjust animations in components (Framer Motion settings)
-
-🌟 Future Improvements
-
-Real backend/API integration
-
-Search + filtering logic
-
-Map view
-
-Authentication + job applications
