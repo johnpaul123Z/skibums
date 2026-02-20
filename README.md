@@ -1,5 +1,5 @@
 ⛷️ SkiJobs – Alpine Modern Job Board
-
+https://skijobs.net/
 A modern ski resort job board built with Next.js, TypeScript, Tailwind CSS, and Framer Motion. Designed with a premium mountain-inspired aesthetic and smooth, interactive animations.
 
 🎿 Design
