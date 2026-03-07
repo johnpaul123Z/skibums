@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SnowHero from "@/components/Hero/SnowHero";
 import { Navigation } from "@/components/Layout/Navigation";
 import { Footer } from "@/components/Layout/Footer";
@@ -10,8 +10,6 @@ import { JobMap } from "@/components/Jobs/JobMap";
 import { AdvancedSearch, FilterState } from "@/components/Jobs/AdvancedSearch";
 import { GlassCard } from "@/components/UI/GlassCard";
 import { Mountain, Briefcase, Map as MapIcon, Loader2, Map, Sparkles } from "lucide-react";
-
-const SEARCH_DEBOUNCE_MS = 400;
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -25,43 +23,33 @@ export default function Home() {
     minSalary: 0,
     maxSalary: 100000,
   });
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(filters.searchQuery.trim()), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(t);
-  }, [filters.searchQuery]);
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/jobs/scrape?category=everything");
+        const data = await response.json();
+        if (data.success && Array.isArray(data.jobs)) {
+          setJobs(data.jobs);
+          if (data.jobs.length === 0) {
+            setError("No jobs found at this time. Please check back later.");
+          }
+        } else {
+          setError("No jobs found at this time. Please check back later.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+        setError("Unable to load jobs. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchJobs = useCallback(async (searchTerm: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const url = searchTerm ? `/api/jobs?q=${encodeURIComponent(searchTerm)}` : "/api/jobs";
-      let response = await fetch(url);
-      let data = await response.json();
-      if (data.success && Array.isArray(data.jobs) && data.jobs.length === 0 && !searchTerm) {
-        response = await fetch("/api/jobs/scrape?category=everything");
-        data = await response.json();
-      }
-      if (data.success && Array.isArray(data.jobs)) {
-        setJobs(data.jobs);
-        if (data.jobs.length === 0) setError("No jobs found. Try different keywords or clear the search.");
-      } else {
-        setError("No jobs found at this time. Please check back later.");
-      }
-    } catch (err) {
-      console.error("Failed to fetch jobs:", err);
-      setError("Unable to load jobs. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
+    fetchJobs();
   }, []);
 
-  useEffect(() => {
-    fetchJobs(debouncedSearch);
-  }, [debouncedSearch, fetchJobs]);
-
-  // Filter jobs based on other criteria (location, housing, salary) — search is done by DB
+  // Filter jobs based on search + criteria
   const filteredJobs = useMemo(() => {
     const stateAliases: Record<string, string[]> = {
       Colorado: ["colorado", "co"],
@@ -82,6 +70,17 @@ export default function Home() {
     };
 
     return jobs.filter((job) => {
+      // Search query filter
+      if (filters.searchQuery) {
+        const query = filters.searchQuery.toLowerCase();
+        const matchesSearch =
+          job.title.toLowerCase().includes(query) ||
+          job.resort.toLowerCase().includes(query) ||
+          job.location.toLowerCase().includes(query) ||
+          job.description?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
       // State filter
       if (filters.state) {
         const aliases = stateAliases[filters.state] || [filters.state.toLowerCase()];

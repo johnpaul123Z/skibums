@@ -20,11 +20,10 @@ export const revalidate = 86400;
 
 async function getJobs() {
   try {
-    let res = await fetch(`${baseUrl}/api/jobs`, { next: { revalidate: 3600 } });
-    let data = await res.json();
-    if (data?.success && Array.isArray(data.jobs) && data.jobs.length > 0) return data.jobs;
-    res = await fetch(`${baseUrl}/api/jobs/scrape?category=everything`, { next: { revalidate: 3600 } });
-    data = await res.json();
+    const res = await fetch(`${baseUrl}/api/jobs/scrape?category=everything`, {
+      next: { revalidate: 3600 },
+    });
+    const data = await res.json();
     if (data?.success && Array.isArray(data.jobs)) return data.jobs;
   } catch {
     // ignore
